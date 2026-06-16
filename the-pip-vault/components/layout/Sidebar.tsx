@@ -1,7 +1,6 @@
-// src/components/layout/Sidebar.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, BookOpen, BarChart2, Settings, Plus, ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
@@ -9,8 +8,14 @@ import { useTheme } from "next-themes";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false); // Nieuwe state
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+
+  // useEffect wordt alleen in de browser uitgevoerd, nooit op de server
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -77,7 +82,12 @@ export function Sidebar() {
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="flex items-center justify-center w-10 h-10 rounded-xl bg-card/80 border border-border/40 text-muted-foreground hover:text-foreground mx-auto transition-colors"
         >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          {/* Alleen het icoon renderen als we in de browser zijn */}
+          {mounted ? (
+            theme === "dark" ? <Sun size={18} /> : <Moon size={18} />
+          ) : (
+            <div className="w-[18px] h-[18px]" /> /* Placeholder tijdens server render */
+          )}
         </button>
 
         <button 
