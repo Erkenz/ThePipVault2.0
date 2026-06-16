@@ -1,12 +1,73 @@
 @import "tailwindcss";
 
 @theme {
-  /* Hier komen later onze specifieke PipVault kleuren (dark/light mode) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  
+  --color-profit: #22c55e;
+  --color-loss: #ff4560;
+  --color-gold: #fbbf24;
 }
 
-/* Base layer resets (indien nodig) */
 @layer base {
+  :root {
+    /* Premium Light Mode */
+    --background: #f4f7f9; 
+    --foreground: #0f172a; 
+    --card: #ffffff; 
+    --card-foreground: #0f172a;
+    --primary: #2563EB;
+    --secondary: #f1f5f9;
+    --muted: #f8fafc;
+    --muted-foreground: #64748b; 
+    --border: #e2e8f0;
+    
+    /* Light Mode Glass */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  }
+
+  .dark {
+    /* Premium Dark Mode */
+    --background: #0b0e14;
+    --foreground: #e2e8f0;
+    --card: #151a23;
+    --card-foreground: #e2e8f0;
+    --primary: #2563EB;
+    --secondary: #2a303c;
+    --muted: #1e2532;
+    --muted-foreground: #94a3b8;
+    --border: #272e3b;
+    
+    /* Dark Mode Glass */
+    --glass-bg: rgba(21, 26, 35, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
+  }
+
   body {
-    @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50;
+    @apply bg-background text-foreground antialiased min-h-screen selection:bg-primary/30;
+  }
+}
+
+@layer utilities {
+  /* Doordat we var() gebruiken, wisselt het glas nu ALTIJD correct mee */
+  .glass {
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary via-violet-500 to-fuchsia-500;
   }
 }
