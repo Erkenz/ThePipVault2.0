@@ -5,12 +5,16 @@ import { Trade } from "@/types/database";
 import { Filter, Calendar, ChevronDown, ExternalLink, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Target, Crosshair, Maximize2, Plus, XCircle, ImageOff } from "lucide-react";
 import Image from "next/image";
 import { AddTradeModal } from "@/components/journal/AddTradeModal";
+import { DeleteTradeModal } from "@/components/journal/DeleteTradeModal";
+import { EditTradeModal } from "@/components/journal/EditTradeModal";
 
 export default function JournalClient({ initialTrades }: { initialTrades: Trade[] }) {
   const [searchPair, setSearchPair] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | "WIN" | "LOSS">("ALL");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [tradeToEdit, setTradeToEdit] = useState<Trade | null>(null);
+  const [tradeToDelete, setTradeToDelete] = useState<Trade | null>(null); 
 
   // Basis Filter Logica
   const filteredTrades = initialTrades.filter((trade) => {
@@ -200,10 +204,20 @@ export default function JournalClient({ initialTrades }: { initialTrades: Trade[
                       </div>
                       <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
                         <div className="flex items-center gap-1.5">
-                          <Calendar size={14} /> 
-                          {trade.date ? new Date(trade.date).toLocaleDateString() : '-'}
+                            <Calendar size={14} /> 
+                            {trade.date ? new Date(trade.date).toLocaleDateString('nl-NL', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                            }) : '-'}
                         </div>
-                      </div>
+                        <div className="flex items-center gap-1.5">
+                            ⏱ {trade.date ? new Date(trade.date).toLocaleTimeString('nl-NL', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                            }) : '-'}
+                        </div>
+                        </div>
                     </div>
                     <div className={`text-3xl font-black tracking-tight ${outcomeText}`}>
                       {trade.pnl > 0 ? '+' : ''}${trade.pnl?.toFixed(2) || '0.00'}
@@ -275,10 +289,10 @@ export default function JournalClient({ initialTrades }: { initialTrades: Trade[
                         <button className="p-2 rounded-full bg-white/5 hover:bg-primary/20 text-muted-foreground hover:text-primary transition-all hover:scale-105" title="View details">
                           <ExternalLink size={16} />
                         </button>
-                        <button className="p-2 rounded-full bg-white/5 hover:bg-emerald-500/20 text-muted-foreground hover:text-emerald-400 transition-all hover:scale-105" title="Edit Trade">
+                        <button onClick={() => setTradeToEdit(trade)} className="p-2 rounded-full bg-white/5 hover:bg-emerald-500/20 text-muted-foreground hover:text-emerald-400 transition-all hover:scale-105" title="Edit Trade">
                           <Edit2 size={16} />
                         </button>
-                        <button className="p-2 rounded-full bg-white/5 hover:bg-rose-500/20 text-muted-foreground hover:text-rose-400 transition-all hover:scale-105" title="Delete Trade">
+                        <button onClick={() => setTradeToDelete(trade)} className="p-2 rounded-full bg-white/5 hover:bg-rose-500/20 text-muted-foreground hover:text-rose-400 transition-all hover:scale-105" title="Delete Trade">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -294,6 +308,22 @@ export default function JournalClient({ initialTrades }: { initialTrades: Trade[
       {/* Add Trade Modal */}
       {isAddModalOpen && (
         <AddTradeModal onClose={() => setIsAddModalOpen(false)} />
+      )}
+      {/* Edit Trade Modal */}
+      {tradeToEdit && (
+        <EditTradeModal 
+          trade={tradeToEdit} 
+          onClose={() => setTradeToEdit(null)} 
+        />
+      )}
+
+      {/* Delete Trade Warning Modal */}
+      {tradeToDelete && (
+        <DeleteTradeModal 
+          tradeId={tradeToDelete.id} 
+          tradePair={tradeToDelete.pair} 
+          onClose={() => setTradeToDelete(null)} 
+        />
       )}
     </div>
   );

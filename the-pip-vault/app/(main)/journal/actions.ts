@@ -29,3 +29,44 @@ export async function addTradeAction(tradeData: any) {
   
   return { success: true };
 }
+export async function updateTradeAction(tradeId: string, tradeData: any) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Unauthorized request.' };
+
+  const { error } = await supabase
+    .from('trades')
+    .update(tradeData)
+    .eq('id', tradeId)
+    .eq('user_id', user.id); // Extra beveiliging: alleen eigen trades updaten
+
+  if (error) {
+    console.error("Supabase Update Error:", error);
+    return { error: error.message };
+  }
+
+  revalidatePath('/journal');
+  return { success: true };
+}
+
+export async function deleteTradeAction(tradeId: string) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Unauthorized request.' };
+
+  const { error } = await supabase
+    .from('trades')
+    .delete()
+    .eq('id', tradeId)
+    .eq('user_id', user.id); // Extra beveiliging
+
+  if (error) {
+    console.error("Supabase Delete Error:", error);
+    return { error: error.message };
+  }
+
+  revalidatePath('/journal');
+  return { success: true };
+}
