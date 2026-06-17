@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Trade } from "@/types/database";
 import { Filter, Calendar, ChevronDown, ExternalLink, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Target, Crosshair, Maximize2, Plus, XCircle, ImageOff } from "lucide-react";
 import Image from "next/image";
+import { AddTradeModal } from "@/components/journal/AddTradeModal";
 
 export default function JournalClient({ initialTrades }: { initialTrades: Trade[] }) {
   const [searchPair, setSearchPair] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | "WIN" | "LOSS">("ALL");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Basis Filter Logica
   const filteredTrades = initialTrades.filter((trade) => {
@@ -60,7 +62,7 @@ export default function JournalClient({ initialTrades }: { initialTrades: Trade[
         </div>
         
         {/* Pip Vault Premium Button */}
-        <button className="group flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-violet-500 px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-primary/25 transition-all hover:shadow-primary/40 hover:opacity-90 active:scale-[0.98]">
+        <button onClick={() => setIsAddModalOpen(true)} className="group flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-violet-500 px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-primary/25 transition-all hover:shadow-primary/40 hover:opacity-90 active:scale-[0.98]">
             <Plus size={18} strokeWidth={2.5} className="transition-transform duration-300 group-hover:rotate-90" />
             <span>New Trade</span>
         </button>
@@ -289,6 +291,10 @@ export default function JournalClient({ initialTrades }: { initialTrades: Trade[
           })
         )}
       </div>
+      {/* Add Trade Modal */}
+      {isAddModalOpen && (
+        <AddTradeModal onClose={() => setIsAddModalOpen(false)} />
+      )}
     </div>
   );
 }
