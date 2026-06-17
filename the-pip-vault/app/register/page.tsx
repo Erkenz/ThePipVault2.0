@@ -1,20 +1,23 @@
 "use client";
 
 import { useState } from 'react';
-import { loginAction } from './actions';
-import { Mail, Lock, ArrowRight, Eye, EyeOff, TrendingUp, Loader2, AlertCircle } from 'lucide-react';
+import { registerAction } from './actions';
+import { Mail, Lock, ArrowRight, Eye, EyeOff, ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Aparte states voor beide wachtwoord velden
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   async function onSubmit(formData: FormData) {
     setIsLoading(true);
     setErrorMessage(null);
     
-    const result = await loginAction(formData);
+    const result = await registerAction(formData);
     
     if (result?.error) {
       setErrorMessage(result.error);
@@ -29,13 +32,13 @@ export default function LoginPage() {
       
       <div className="z-10 mb-8 flex flex-col items-center text-center">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-violet-500 to-fuchsia-500 shadow-xl shadow-primary/25">
-          <span className="text-3xl font-extrabold text-white">P</span>
+          <ShieldCheck className="h-8 w-8 text-white" strokeWidth={2.5} />
         </div>
         <h1 className="text-3xl font-black uppercase tracking-[0.15em] text-foreground">
-          The Pip<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-violet-500">vault</span>
+          Initialize <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-violet-500">Vault</span>
         </h1>
         <p className="mt-2 text-sm font-medium text-muted-foreground">
-          Access your trading command center
+          Create your secure trading identity
         </p>
       </div>
 
@@ -50,6 +53,7 @@ export default function LoginPage() {
 
         <form action={onSubmit} className="space-y-6">
           
+          {/* Email */}
           <div className="space-y-2">
             <div className="flex h-5 items-center">
               <label htmlFor="email" className="block text-[11px] font-bold uppercase leading-none tracking-widest text-muted-foreground">
@@ -72,14 +76,12 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Wachtwoord */}
           <div className="space-y-2">
             <div className="flex h-5 items-center justify-between">
               <label htmlFor="password" className="block text-[11px] font-bold uppercase leading-none tracking-widest text-muted-foreground">
-                Password
+                Secure Password
               </label>
-              <a href="#" className="text-[11px] font-semibold text-primary transition-colors hover:text-violet-400">
-                Forgot?
-              </a>
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-muted-foreground/60">
@@ -104,6 +106,36 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Bevestig Wachtwoord */}
+          <div className="space-y-2">
+            <div className="flex h-5 items-center justify-between">
+              <label htmlFor="confirmPassword" className="block text-[11px] font-bold uppercase leading-none tracking-widest text-muted-foreground">
+                Verify Password
+              </label>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-muted-foreground/60">
+                <Lock size={18} strokeWidth={2} />
+              </div>
+              <input 
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"} 
+                required
+                disabled={isLoading}
+                placeholder="••••••••"
+                className="w-full rounded-xl border border-transparent bg-background/80 px-11 py-3.5 text-sm font-medium tracking-widest text-foreground outline-none transition-all placeholder:text-muted-foreground/40 focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
+              />
+              <button 
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-4 text-muted-foreground/60 transition-colors hover:text-foreground"
+              >
+                {showConfirmPassword ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
+              </button>
+            </div>
+          </div>
+
           <button 
             type="submit" 
             disabled={isLoading}
@@ -113,7 +145,7 @@ export default function LoginPage() {
               <Loader2 size={18} strokeWidth={2.5} className="animate-spin" />
             ) : (
               <>
-                <span>Authenticate</span>
+                <span>Initialize Account</span>
                 <ArrowRight size={18} strokeWidth={2.5} className="transition-transform group-hover:translate-x-1" />
               </>
             )}
@@ -123,7 +155,7 @@ export default function LoginPage() {
       </div>
 
       <div className="z-10 mt-8 text-sm font-medium text-muted-foreground">
-        Not a member? <Link href="/register" className="font-semibold text-primary transition-colors hover:text-violet-400">Initiate Access</Link>
+        Already registered? <Link href="/login" className="font-semibold text-primary transition-colors hover:text-violet-400">Authenticate Here</Link>
       </div>
 
     </div>
