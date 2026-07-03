@@ -60,7 +60,7 @@ export default function AnalyticsClient({ trades }: { trades: Trade[] }) {
     });
   });
 
-  // --- 3. DE FIX: TRACK DE INDEX IN PLAATS VAN HET OBJECT ---
+  // --- 3. TRACK DE INDEX  ---
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const balances = equityData.map(d => d.balance);

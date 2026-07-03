@@ -59,7 +59,6 @@
 }
 
 @layer utilities {
-  /* Doordat we var() gebruiken, wisselt het glas nu ALTIJD correct mee */
   .glass {
     background-color: var(--glass-bg);
     backdrop-filter: blur(16px);
