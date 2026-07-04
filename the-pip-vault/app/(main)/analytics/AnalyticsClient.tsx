@@ -122,10 +122,10 @@ export default function AnalyticsClient({ trades }: { trades: Trade[] }) {
     : [];
 
   const Card = ({ title, icon: Icon, children }: any) => (
-    <div className="bg-card/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 shadow-lg transition-all hover:bg-card/60 hover:border-white/10">
+    <div className="bg-white border border-slate-200 rounded-md p-5 shadow-sm transition-all hover:border-slate-350">
       <div className="flex justify-between items-start mb-3">
-        <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{title}</h3>
-        {Icon && <Icon size={14} className="text-muted-foreground/50" />}
+        <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{title}</h3>
+        {Icon && <Icon size={14} className="text-slate-400" />}
       </div>
       {children}
     </div>
@@ -136,10 +136,10 @@ export default function AnalyticsClient({ trades }: { trades: Trade[] }) {
       
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-black italic tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
           Analytics Deep Dive
         </h1>
-        <p className="text-sm font-medium text-muted-foreground mt-1">
+        <p className="text-sm font-medium text-slate-500 mt-1">
           Advanced performance metrics and statistical breakdown.
         </p>
       </div>
@@ -147,130 +147,128 @@ export default function AnalyticsClient({ trades }: { trades: Trade[] }) {
       {/* --- GRID ROW 1 --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card title="Total Net P&L" icon={Wallet}>
-          <div className={`text-3xl font-black tracking-tight ${totalNetPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+          <div className={`text-3xl font-bold tracking-tight ${totalNetPnl >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
             {totalNetPnl >= 0 ? '+' : ''}${totalNetPnl.toFixed(2)}
           </div>
-          <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-muted-foreground">
-            <Activity size={12} className="text-emerald-500" /> Fees: ${totalFees.toFixed(2)}
+          <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-slate-500">
+            <Activity size={12} className="text-emerald-600" /> Fees: ${totalFees.toFixed(2)}
           </div>
         </Card>
         <Card title="Total Trades" icon={BarChart3}>
-          <div className="text-3xl font-black text-blue-400">{totalTrades}</div>
-          <div className="mt-2 text-xs font-medium text-muted-foreground">Avg/Day: {(totalTrades / 30).toFixed(1)}</div>
+          <div className="text-3xl font-bold text-slate-900">{totalTrades}</div>
+          <div className="mt-2 text-xs font-medium text-slate-500">Avg/Day: {(totalTrades / 30).toFixed(1)}</div>
         </Card>
         <Card title="Win Rate" icon={Activity}>
-          <div className="text-3xl font-black text-emerald-500">{winRate.toFixed(1)}%</div>
-          <div className="w-full h-1.5 bg-background rounded-full mt-3 overflow-hidden border border-white/5">
-            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${winRate}%` }} />
+          <div className="text-3xl font-bold text-emerald-600">{winRate.toFixed(1)}%</div>
+          <div className="w-full h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden border border-slate-200/50">
+            <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${winRate}%` }} />
           </div>
         </Card>
         <Card title="Wins vs Losses" icon={Target}>
-          <div className="text-3xl font-black text-foreground">
-            <span className="text-blue-400">{wins.length}W</span> <span className="text-muted-foreground/30">/</span> <span className="text-rose-500">{losses.length}L</span>
+          <div className="text-3xl font-bold text-slate-900">
+            <span className="text-slate-800">{wins.length}W</span> <span className="text-slate-300">/</span> <span className="text-red-650">{losses.length}L</span>
           </div>
-          <div className="mt-2 text-xs font-medium text-muted-foreground">{(wins.length / (losses.length || 1)).toFixed(2)} ratio</div>
+          <div className="mt-2 text-xs font-medium text-slate-500">{(wins.length / (losses.length || 1)).toFixed(2)} ratio</div>
         </Card>
       </div>
 
       {/* --- GRID ROW 2 --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card title="Avg Win / Loss" icon={TrendingUp}>
-          <div className="text-2xl font-black">
-            <span className="text-emerald-500">${avgWin.toFixed(2)}</span> <span className="text-muted-foreground/30">/</span> <span className="text-rose-500">-${Math.abs(avgLoss).toFixed(2)}</span>
+          <div className="text-2xl font-bold">
+            <span className="text-emerald-650">${avgWin.toFixed(2)}</span> <span className="text-slate-300">/</span> <span className="text-red-650">-${Math.abs(avgLoss).toFixed(2)}</span>
           </div>
-          <div className="flex h-1.5 bg-background rounded-full mt-3 overflow-hidden border border-white/5">
-            <div className="h-full bg-emerald-500" style={{ width: '60%' }} />
-            <div className="h-full bg-rose-500" style={{ width: '40%' }} />
+          <div className="flex h-1.5 bg-slate-100 rounded-full mt-3 overflow-hidden border border-slate-200/50">
+            <div className="h-full bg-emerald-600" style={{ width: '60%' }} />
+            <div className="h-full bg-red-600" style={{ width: '40%' }} />
           </div>
         </Card>
         <Card title="Best Streaks" icon={Zap}>
-          <div className="text-2xl font-black text-fuchsia-500">
-            {Math.max(wins.length, 5)}W <span className="text-muted-foreground/30">/</span> 1L
+          <div className="text-2xl font-bold text-slate-800">
+            {Math.max(wins.length, 5)}W <span className="text-slate-350">/</span> 1L
           </div>
-          <div className="mt-2 text-xs font-medium text-muted-foreground">Consecutive results</div>
+          <div className="mt-2 text-xs font-medium text-slate-500">Consecutive results</div>
         </Card>
         <Card title="Largest Win / Loss" icon={Layers}>
-          <div className="text-2xl font-black text-emerald-500">${largestWin.toFixed(0)}</div>
-          <div className="mt-2 text-xs font-medium text-muted-foreground">Max Loss: -${Math.abs(largestLoss).toFixed(0)}</div>
+          <div className="text-2xl font-bold text-emerald-600">${largestWin.toFixed(0)}</div>
+          <div className="mt-2 text-xs font-medium text-slate-500">Max Loss: -${Math.abs(largestLoss).toFixed(0)}</div>
         </Card>
         <Card title="Expectancy" icon={Target}>
-          <div className="text-2xl font-black text-emerald-500">${expectancy.toFixed(2)}</div>
-          <div className="mt-2 text-xs font-medium text-muted-foreground">Per trade</div>
+          <div className={`text-2xl font-bold ${expectancy >= 0 ? 'text-emerald-600' : 'text-red-650'}`}>
+            {expectancy >= 0 ? '+' : ''}${expectancy.toFixed(2)}
+          </div>
+          <div className="mt-2 text-xs font-medium text-slate-500">Per trade</div>
         </Card>
       </div>
 
       {/* --- GRID ROW 3 --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card title="Avg Hold Time" icon={Clock}>
-          <div className="text-2xl font-black text-orange-400">1hrs 31m</div>
-          <div className="mt-2 text-xs font-medium text-muted-foreground">Entry to Exit</div>
+          <div className="text-2xl font-bold text-slate-800">1hrs 31m</div>
+          <div className="mt-2 text-xs font-medium text-slate-500">Entry to Exit</div>
         </Card>
         <Card title="Best Performance" icon={Award}>
-          <div className="text-2xl font-black text-fuchsia-400">{bestPair}</div>
-          <div className="mt-2 text-xs font-medium text-muted-foreground">
+          <div className="text-2xl font-bold text-slate-850">{bestPair}</div>
+          <div className="mt-2 text-xs font-semibold text-emerald-600">
             +{pairStats[bestPair] ? pairStats[bestPair].toFixed(2) : "0.00"}
           </div>
         </Card>
         <Card title="Long vs Short" icon={Layers}>
-          <div className="text-2xl font-black text-foreground">
-            {longWinRate.toFixed(0)}% <span className="text-muted-foreground/30">/</span> {shortWinRate.toFixed(0)}%
+          <div className="text-2xl font-bold text-slate-800">
+            {longWinRate.toFixed(0)}% <span className="text-slate-300">/</span> {shortWinRate.toFixed(0)}%
           </div>
           <div className="flex gap-2 mt-2">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">L: {longs.length}</span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">S: {shorts.length}</span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">L: {longs.length}</span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">S: {shorts.length}</span>
           </div>
         </Card>
         <Card title="Total Commissions" icon={DollarSign}>
-          <div className="text-2xl font-black text-rose-500">${totalFees.toFixed(2)}</div>
-          <div className="mt-2 text-xs font-medium text-muted-foreground">Fees + Swap</div>
+          <div className="text-2xl font-bold text-red-700">${totalFees.toFixed(2)}</div>
+          <div className="mt-2 text-xs font-medium text-slate-500">Fees + Swap</div>
         </Card>
       </div>
 
       {/* --- CHART SECTION --- */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         
-        <div className="lg:col-span-3 bg-card/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-lg flex flex-col relative select-none">
+        <div className="lg:col-span-3 bg-white border border-slate-200 rounded-md p-6 shadow-sm flex flex-col relative select-none">
           
           <div className="flex justify-between items-start mb-8 relative z-10">
             <div>
-              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+              <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
                 Account Balance
               </h3>
-              <div className="text-3xl font-black text-foreground">
+              <div className="text-3xl font-bold text-slate-900">
                 ${runningBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                <span className={`text-sm font-bold ml-2 ${totalNetPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                <span className={`text-sm font-bold ml-2 ${totalNetPnl >= 0 ? 'text-emerald-600' : 'text-red-650'}`}>
                   {totalNetPnl >= 0 ? '+' : ''}${totalNetPnl.toFixed(2)}
                 </span>
               </div>
             </div>
-            <Wallet size={16} className="text-primary" />
+            <Wallet size={16} className="text-slate-450" />
           </div>
           
-          <div ref={containerRef} className="flex-1 relative min-h-[250px] w-full mt-auto rounded-xl flex items-end">
+          <div ref={containerRef} className="flex-1 relative min-h-[250px] w-full mt-auto rounded-md flex items-end">
              
              {/* Achtergrond Matrix */}
-             <div className="absolute inset-0 flex flex-col justify-between px-2 py-4 pointer-events-none opacity-30">
-               <div className="w-full border-t border-muted-foreground/30 border-dashed h-0" />
-               <div className="w-full border-t border-muted-foreground/30 border-dashed h-0" />
-               <div className="w-full border-t border-muted-foreground/30 border-dashed h-0" />
-               <div className="w-full border-t border-muted-foreground/30 border-dashed h-0" />
-               <div className="w-full border-t border-muted-foreground/30 border-dashed h-0" />
+             <div className="absolute inset-0 flex flex-col justify-between px-2 py-4 pointer-events-none opacity-60">
+               <div className="w-full border-t border-slate-200/60 border-dashed h-0" />
+               <div className="w-full border-t border-slate-200/60 border-dashed h-0" />
+               <div className="w-full border-t border-slate-200/60 border-dashed h-0" />
+               <div className="w-full border-t border-slate-200/60 border-dashed h-0" />
+               <div className="w-full border-t border-slate-200/60 border-dashed h-0" />
              </div>
 
              {equityData.length > 1 && (
                <svg viewBox="0 0 1000 300" preserveAspectRatio="none" className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
                   <defs>
                     <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
-                    </linearGradient>
-                    <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#3b82f6" />
-                      <stop offset="100%" stopColor="#8b5cf6" />
+                      <stop offset="0%" stopColor="#e2e8f0" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="#f8fafc" stopOpacity="0.1" />
                     </linearGradient>
                   </defs>
                   <path d={areaPath} fill="url(#areaGradient)" />
-                  <path d={linePath} fill="none" stroke="url(#lineGradient)" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                  <path d={linePath} fill="none" stroke="#0f172a" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
                </svg>
              )}
 
@@ -283,68 +281,61 @@ export default function AnalyticsClient({ trades }: { trades: Trade[] }) {
 
              {/* INTERACTIEVE HOVER TOOLTIP */}
              {hoveredIndex !== null && hoveredPoint && (
-               <div className="absolute inset-0 z-30 pointer-events-none">
-                 <div 
-                   className="absolute top-0 bottom-0 w-px border-l border-dashed border-white/20 transition-all duration-75"
-                   style={{ left: `${(hoveredIndex / dataLength) * 100}%` }}
-                 />
-                 
-                 <div 
-                   className="absolute w-3 h-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-2 border-primary shadow-[0_0_10px_#3b82f6] transition-all duration-75"
-                   style={{ 
-                     left: `${(hoveredIndex / dataLength) * 100}%`,
-                     top: `${100 - (((hoveredPoint.balance - minBalance) / (balanceRange || 1)) * 66.6 + 16.6)}%`
-                   }}
-                 />
+                <div className="absolute inset-0 z-30 pointer-events-none">
+                  <div 
+                    className="absolute top-0 bottom-0 w-px border-l border-dashed border-slate-400/50 transition-all duration-75"
+                    style={{ left: `${(hoveredIndex / dataLength) * 100}%` }}
+                  />
+                  
+                  <div 
+                    className="absolute w-2.5 h-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-950 border-2 border-white shadow-sm transition-all duration-75"
+                    style={{ 
+                      left: `${(hoveredIndex / dataLength) * 100}%`,
+                      top: `${100 - (((hoveredPoint.balance - minBalance) / (balanceRange || 1)) * 66.6 + 16.6)}%`
+                    }}
+                  />
 
-                 <div 
-                   className="absolute top-[10%] bg-[#1A1D24] border border-white/5 p-4 rounded-xl shadow-2xl min-w-[220px] transition-transform duration-75"
-                   style={{ 
-                     left: `${(hoveredIndex / dataLength) * 100}%`,
-                     transform: (hoveredIndex / dataLength) > 0.65 ? 'translateX(calc(-100% - 16px))' : 'translateX(16px)'
-                   }}
-                 >
-                   <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                     <Calendar size={14} />
-                     <span className="text-sm font-medium">{hoveredPoint.date}</span>
-                   </div>
-                   
-                   <div className="mb-5">
-                     <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Equity</div>
-                     <div className="text-2xl font-black text-white">
-                       ${hoveredPoint.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                     </div>
-                   </div>
+                  <div 
+                    className="absolute top-[10%] bg-zinc-950 border border-zinc-900 p-3.5 rounded-md shadow-lg min-w-[220px] transition-transform duration-75"
+                    style={{ 
+                      left: `${(hoveredIndex / dataLength) * 100}%`,
+                      transform: (hoveredIndex / dataLength) > 0.65 ? 'translateX(calc(-100% - 16px))' : 'translateX(16px)'
+                    }}
+                  >
+                    <div className="flex items-center gap-2 text-slate-400 mb-3 border-b border-zinc-800 pb-1.5">
+                      <Calendar size={13} />
+                      <span className="text-xs font-semibold text-slate-350">{hoveredPoint.date}</span>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Equity</div>
+                      <div className="text-xl font-bold text-white">
+                        ${hoveredPoint.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                    </div>
 
-                   {hoveredTrades.length > 0 && (
-                     <div className="space-y-3 pt-2 border-t border-white/5">
-                       {hoveredTrades.map(t => (
-                         <div key={t.id} className="flex items-center justify-between">
-                           <div className="flex items-center gap-2">
-                             <div className={`w-1.5 h-1.5 rounded-full ${t.pnl >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                             <span className="text-white font-bold text-sm tracking-wide">{t.pair}</span>
-                             <span className="text-[10px] text-muted-foreground font-bold uppercase">{t.direction}</span>
-                           </div>
-                           <span className={`font-bold text-sm ${t.pnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                             {t.pnl >= 0 ? '+' : '$-'}{Math.abs(t.pnl).toFixed(2)}
-                           </span>
-                         </div>
-                       ))}
-                     </div>
-                   )}
-                 </div>
-               </div>
-             )}
-
-             {hoveredIndex === null && equityData.length > 0 && (
-               <div className="absolute w-3 h-3 right-0 -translate-y-1/2 translate-x-1/2 z-10 pointer-events-none" style={{ top: `${100 - (((equityData[equityData.length - 1].balance - minBalance) / (balanceRange || 1)) * 66.6 + 16.6)}%` }}>
-                  <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-60"></div>
-                  <div className="absolute inset-full rounded-full bg-white shadow-[0_0_10px_#8b5cf6]"></div>
-               </div>
-             )}
+                    {hoveredTrades.length > 0 && (
+                      <div className="space-y-1.5 pt-1.5 border-t border-slate-800">
+                        {hoveredTrades.map(t => (
+                          <div key={t.id} className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-1.5">
+                              <div className={`w-1.5 h-1.5 rounded-full ${t.pnl >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                              <span className="text-slate-200 font-bold tracking-tight">{t.pair}</span>
+                              <span className="text-[9px] text-slate-400 font-semibold uppercase">{t.direction}</span>
+                            </div>
+                            <span className={`font-bold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                              {t.pnl >= 0 ? '+' : '-'}${Math.abs(t.pnl).toFixed(0)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
           </div>
 
-          <div className="flex justify-between mt-4 text-[10px] text-muted-foreground font-medium px-2 relative z-10 pointer-events-none">
+          <div className="flex justify-between mt-4 text-[10px] text-slate-400 font-medium px-2 relative z-10 pointer-events-none">
             {equityData.length <= 6 ? (
               equityData.map((d, i) => <span key={i}>{d.date}</span>)
             ) : (
@@ -361,44 +352,44 @@ export default function AnalyticsClient({ trades }: { trades: Trade[] }) {
 
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-4 flex flex-col">
-          <div className="bg-card/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-lg flex-1">
+          <div className="bg-white border border-slate-200 rounded-md p-6 shadow-sm flex-1">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar size={14} className="text-muted-foreground" />
-              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Today's Session</h3>
+              <Calendar size={14} className="text-slate-400" />
+              <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Today's Session</h3>
             </div>
-            <div className={`text-3xl font-black tracking-tight ${todaysPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+            <div className={`text-3xl font-bold tracking-tight ${todaysPnl >= 0 ? 'text-emerald-600' : 'text-red-650'}`}>
               ${todaysPnl.toFixed(2)}
             </div>
-            <div className="text-xs font-medium text-muted-foreground mt-1 mb-6">
+            <div className="text-xs font-medium text-slate-500 mt-1 mb-6">
               {todaysTrades.length} trades executed today
             </div>
 
             <div className="space-y-4 text-sm font-medium">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Current Streak</span>
-                <span className="text-foreground font-bold">5 Wins</span>
+                <span className="text-slate-400">Current Streak</span>
+                <span className="text-slate-800 font-bold">5 Wins</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Drawdown</span>
-                <span className="text-rose-500 font-bold">-${Math.abs(largestLoss).toFixed(2)}</span>
+                <span className="text-slate-400">Drawdown</span>
+                <span className="text-red-650 font-bold">-${Math.abs(largestLoss).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Profit Factor</span>
-                <span className="text-foreground font-bold">
+                <span className="text-slate-400">Profit Factor</span>
+                <span className="text-slate-800 font-bold">
                   {Math.abs(totalLossPnl) > 0 ? (totalWinPnl / Math.abs(totalLossPnl)).toFixed(2) : "0.00"}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#1A1D24] to-background border border-white/5 rounded-2xl p-6 shadow-[0_0_30px_rgba(37,99,235,0.1)] text-center relative overflow-hidden group cursor-pointer">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-primary/10 blur-[50px] rounded-full pointer-events-none group-hover:bg-primary/20 transition-colors duration-500" />
+          <div className="bg-zinc-950 border border-zinc-900 rounded-md p-6 shadow-sm text-center relative overflow-hidden group cursor-pointer">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-zinc-900/10 blur-[50px] rounded-full pointer-events-none transition-colors duration-500" />
             <div className="relative z-10 flex flex-col items-center">
-              <div className="p-3 bg-primary/10 rounded-full mb-3 border border-primary/20">
-                <Cpu size={20} className="text-primary" />
+              <div className="p-3 bg-zinc-900 rounded-full mb-3 border border-zinc-800">
+                <Cpu size={20} className="text-zinc-400" />
               </div>
-              <h3 className="text-base font-black text-foreground mb-1">PipVault AI</h3>
-              <p className="text-[10px] font-medium text-muted-foreground/80 leading-relaxed">
+              <h3 className="text-base font-bold text-white mb-1">PipVault AI</h3>
+              <p className="text-[10px] font-medium text-slate-400 leading-relaxed">
                 AI Analysis coming soon to help you optimize based on this data.
               </p>
             </div>

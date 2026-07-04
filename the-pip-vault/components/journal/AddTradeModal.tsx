@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { X, TrendingUp, TrendingDown, Activity, Crosshair, Wallet, Loader2, ChevronDown, Calculator, Calendar } from "lucide-react";
 import { addTradeAction } from "@/app/(main)/journal/actions";
 
-// --- CUSTOM DROPDOWN COMPONENT (Glassmorphism Stijl) ---
+// --- CUSTOM DROPDOWN COMPONENT (Enterprise SaaS Style) ---
 const CustomSelect = ({ 
   name, 
   value, 
@@ -36,16 +36,16 @@ const CustomSelect = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex justify-between items-center bg-background/50 border rounded-xl px-4 py-3.5 text-sm font-medium text-foreground outline-none transition-all backdrop-blur-sm ${
-          isOpen ? "border-primary/50 ring-1 ring-primary/30" : "border-border/50 hover:border-white/20"
+        className={`w-full flex justify-between items-center bg-slate-50 border rounded-md px-3 py-2 text-xs font-medium text-slate-800 outline-none transition-all ${
+          isOpen ? "border-slate-400 bg-white" : "border-slate-200 hover:border-slate-350"
         }`}
       >
         <span>{value || "Selecteer..."}</span>
-        <ChevronDown size={16} className={`text-muted-foreground transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 top-[calc(100%+8px)] left-0 w-full bg-card/80 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute z-50 top-[calc(100%+4px)] left-0 w-full bg-white border border-slate-200 rounded-md shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
           <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
             {options.map((opt) => (
               <div
@@ -54,8 +54,8 @@ const CustomSelect = ({
                   onChange({ target: { name, value: opt } });
                   setIsOpen(false);
                 }}
-                className={`px-3 py-2.5 text-sm rounded-lg cursor-pointer transition-colors ${
-                  value === opt ? "bg-primary/20 text-primary font-bold" : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                className={`px-3 py-2 text-xs rounded cursor-pointer transition-colors ${
+                  value === opt ? "bg-slate-100 text-slate-900 font-bold" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
                 {opt}
@@ -157,154 +157,252 @@ export function AddTradeModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 animate-in fade-in duration-150">
       
-      <div className="relative w-full max-w-[850px] bg-card/70 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <div className="relative w-full max-w-[800px] bg-white border border-slate-200 rounded-md shadow-xl flex flex-col max-h-[90vh] overflow-hidden">
         
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
-
         {/* Header */}
-        <div className="relative flex items-center justify-between p-6 border-b border-white/5 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-violet-500 to-fuchsia-500 shadow-lg shadow-primary/30">
-              <Calculator className="h-6 w-6 text-white" strokeWidth={2.5} />
+        <div className="relative flex items-center justify-between p-5 border-b border-slate-200 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-100 border border-slate-200 text-slate-700">
+              <Calculator className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-xl font-black uppercase tracking-widest text-foreground">Log New Trade</h2>
-              <p className="text-sm font-medium text-muted-foreground mt-0.5">Record your execution details</p>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">Log New Trade</h2>
+              <p className="text-xs text-slate-500 font-medium">Record execution parameters and psychology</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm">
-            <X size={20} />
+          <button 
+            onClick={onClose} 
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+          >
+            <X size={16} />
           </button>
         </div>
 
         {/* Form Body */}
         <div className="relative overflow-y-auto p-6 md:p-8 custom-scrollbar">
-          <form id="add-trade-form" onSubmit={handleSubmit} className="space-y-10">
+          <form id="add-trade-form" onSubmit={handleSubmit} className="space-y-8">
             
             {error && (
-              <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm font-medium backdrop-blur-sm">
+              <div className="p-3.5 rounded-md bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
                 {error}
               </div>
             )}
 
             {/* --- 1. MARKET CONTEXT --- */}
-            <section className="space-y-5">
-              <div className="flex items-center gap-2 text-primary">
-                <Activity size={18} strokeWidth={2.5} />
-                <h3 className="text-xs font-bold uppercase tracking-widest">Market Context</h3>
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 text-slate-855 pb-1 border-b border-slate-100">
+                <Activity size={14} className="text-slate-500" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Market Context</h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Pair / Ticker</label>
-                  <input required name="pair" value={formData.pair} onChange={handleChange} placeholder="EURUSD" className="w-full bg-background/50 border border-border/50 rounded-xl px-4 py-3.5 text-sm font-bold text-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all uppercase backdrop-blur-sm" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pair / Ticker</label>
+                  <input 
+                    required 
+                    name="pair" 
+                    value={formData.pair} 
+                    onChange={handleChange} 
+                    placeholder="EURUSD" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold text-slate-850 outline-none focus:bg-white focus:border-slate-400 transition-all uppercase" 
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Direction</label>
-                  <div className="flex gap-3 h-[46px]">
-                    <button type="button" onClick={() => setFormData({...formData, direction: "LONG"})} className={`flex-1 flex items-center justify-center gap-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all border backdrop-blur-sm ${formData.direction === "LONG" ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.15)]" : "bg-background/50 border-border/50 text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}>
-                      <TrendingUp size={16} strokeWidth={2.5} /> Long
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Direction</label>
+                  <div className="flex gap-2.5 h-[34px]">
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData({...formData, direction: "LONG"})} 
+                      className={`flex-1 flex items-center justify-center gap-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
+                        formData.direction === "LONG" 
+                          ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm" 
+                          : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                      }`}
+                    >
+                      <TrendingUp size={14} /> Long
                     </button>
-                    <button type="button" onClick={() => setFormData({...formData, direction: "SHORT"})} className={`flex-1 flex items-center justify-center gap-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all border backdrop-blur-sm ${formData.direction === "SHORT" ? "bg-rose-500/10 border-rose-500/50 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.15)]" : "bg-background/50 border-border/50 text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}>
-                      <TrendingDown size={16} strokeWidth={2.5} /> Short
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData({...formData, direction: "SHORT"})} 
+                      className={`flex-1 flex items-center justify-center gap-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all border ${
+                        formData.direction === "SHORT" 
+                          ? "bg-red-50 border-red-305 text-red-700 shadow-sm" 
+                          : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-805"
+                      }`}
+                    >
+                      <TrendingDown size={14} /> Short
                     </button>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Account</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account</label>
                   <CustomSelect name="account_type" value={formData.account_type} options={["FTMO 50K (Funded)", "Personal Live", "Demo"]} onChange={handleChange} />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Session</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session</label>
                   <CustomSelect name="session" value={formData.session} options={["London", "New York", "Tokyo", "Sydney"]} onChange={handleChange} />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Asset Class</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Asset Class</label>
                   <CustomSelect name="asset_type" value={formData.asset_type} options={["Forex", "Futures"]} onChange={handleChange} />
                 </div>
               </div>
 
               {/* Custom Styled Datetime Pickers */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Entry Time</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Entry Time</label>
                   <div className="relative flex items-center">
-                    <Calendar size={16} className="absolute left-4 text-muted-foreground pointer-events-none" />
-                    {/* De &::-webkit... klassen verbergen het standaard icon en maken het hele veld klikbaar voor de datum popup */}
-                    <input required type="datetime-local" name="date" value={formData.date} onChange={handleChange} className="w-full bg-background/50 border border-border/50 rounded-xl pl-11 pr-4 py-3 text-sm font-medium text-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all [color-scheme:dark] backdrop-blur-sm [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
+                    <Calendar size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+                    <input 
+                      required 
+                      type="datetime-local" 
+                      name="date" 
+                      value={formData.date} 
+                      onChange={handleChange} 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-md pl-9 pr-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:bg-white focus:border-slate-400 transition-all [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" 
+                    />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Exit Time</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Exit Time</label>
                   <div className="relative flex items-center">
-                    <Calendar size={16} className="absolute left-4 text-muted-foreground pointer-events-none" />
-                    <input type="datetime-local" name="exit_date" value={formData.exit_date} onChange={handleChange} className="w-full bg-background/50 border border-border/50 rounded-xl pl-11 pr-4 py-3 text-sm font-medium text-foreground outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all [color-scheme:dark] backdrop-blur-sm [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
+                    <Calendar size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+                    <input 
+                      type="datetime-local" 
+                      name="exit_date" 
+                      value={formData.exit_date} 
+                      onChange={handleChange} 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-md pl-9 pr-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:bg-white focus:border-slate-400 transition-all [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" 
+                    />
                   </div>
                 </div>
               </div>
             </section>
 
             {/* --- 2. EXECUTION & RISK --- */}
-            <section className="space-y-5">
-              <div className="flex items-center gap-2 text-violet-400">
-                <Crosshair size={18} strokeWidth={2.5} />
-                <h3 className="text-xs font-bold uppercase tracking-widest">Execution & Risk</h3>
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 text-slate-800 pb-1 border-b border-slate-100">
+                <Crosshair size={14} className="text-slate-500" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Execution & Risk</h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Entry Price</label>
-                  <input required type="number" step="any" name="entry_price" value={formData.entry_price} onChange={handleChange} className="w-full bg-background/50 border border-border/50 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all backdrop-blur-sm" />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Entry Price</label>
+                  <input 
+                    required 
+                    type="number" 
+                    step="any" 
+                    name="entry_price" 
+                    value={formData.entry_price} 
+                    onChange={handleChange} 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:bg-white focus:border-slate-400 transition-all" 
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Stop Loss</label>
-                  <input required type="number" step="any" name="stop_loss" value={formData.stop_loss} onChange={handleChange} className="w-full bg-background/50 border border-border/50 border-l-2 border-l-rose-500 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:border-rose-500/50 focus:border-l-rose-500 transition-all backdrop-blur-sm" />
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Stop Loss</label>
+                  <input 
+                    required 
+                    type="number" 
+                    step="any" 
+                    name="stop_loss" 
+                    value={formData.stop_loss} 
+                    onChange={handleChange} 
+                    className="w-full bg-slate-50 border border-slate-200 border-l-2 border-l-red-500 rounded-md px-3 py-2 text-xs font-semibold text-slate-805 outline-none focus:bg-white focus:border-slate-400 transition-all" 
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Take Profit</label>
-                  <input type="number" step="any" name="take_profit" value={formData.take_profit} onChange={handleChange} className="w-full bg-background/50 border border-border/50 border-l-2 border-l-emerald-500 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:border-emerald-500/50 focus:border-l-emerald-500 transition-all backdrop-blur-sm" />
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Take Profit</label>
+                  <input 
+                    type="number" 
+                    step="any" 
+                    name="take_profit" 
+                    value={formData.take_profit} 
+                    onChange={handleChange} 
+                    className="w-full bg-slate-50 border border-slate-200 border-l-2 border-l-emerald-500 rounded-md px-3 py-2 text-xs font-semibold text-slate-805 outline-none focus:bg-white focus:border-slate-400 transition-all" 
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Exit Price</label>
-                  <input type="number" step="any" name="exit_price" value={formData.exit_price} onChange={handleChange} placeholder="Optional" className="w-full bg-background/50 border border-border/50 border-l-2 border-l-primary rounded-xl px-4 py-3.5 text-sm font-bold placeholder:font-medium placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 focus:border-l-primary transition-all backdrop-blur-sm" />
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Exit Price</label>
+                  <input 
+                    type="number" 
+                    step="any" 
+                    name="exit_price" 
+                    value={formData.exit_price} 
+                    onChange={handleChange} 
+                    placeholder="Optional" 
+                    className="w-full bg-slate-50 border border-slate-200 border-l-2 border-l-slate-400 rounded-md px-3 py-2 text-xs font-semibold text-slate-800 placeholder:font-medium placeholder:text-slate-400 outline-none focus:bg-white focus:border-slate-400 transition-all" 
+                  />
                 </div>
               </div>
               
-              <div className="flex items-center justify-between bg-background/30 border border-white/5 rounded-xl p-4 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
-                <div className="text-muted-foreground">Risk: <span className="text-foreground ml-1.5">{risk}</span> <span className="text-[10px] text-muted-foreground/60">{unitLabel}</span></div>
-                <div className="text-muted-foreground">Reward: <span className="text-foreground ml-1.5">{reward}</span> <span className="text-[10px] text-muted-foreground/60">{unitLabel}</span></div>
-                <div className="text-muted-foreground">Plan R:R: <span className="text-primary ml-1.5">{rrRatio}</span></div>
+              <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-md p-3.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div>Risk: <span className="text-slate-800 ml-1.5">{risk}</span> <span className="text-[9px] text-slate-400 font-medium">{unitLabel}</span></div>
+                <div>Reward: <span className="text-slate-800 ml-1.5">{reward}</span> <span className="text-[9px] text-slate-400 font-medium">{unitLabel}</span></div>
+                <div>Plan R:R: <span className="text-slate-900 font-bold ml-1.5">{rrRatio}</span></div>
               </div>
             </section>
 
             {/* --- 3. OUTCOME --- */}
-            <section className="space-y-5">
-              <div className="flex items-center gap-2 text-emerald-400">
-                <Wallet size={18} strokeWidth={2.5} />
-                <h3 className="text-xs font-bold uppercase tracking-widest">Outcome (USD)</h3>
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 text-slate-800 pb-1 border-b border-slate-100">
+                <Wallet size={14} className="text-slate-500" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Outcome (USD)</h3>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 rounded-2xl border border-white/10 border-dashed bg-background/20 backdrop-blur-sm">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Gross P&L</label>
-                  <input required type="number" step="any" name="pnl_currency" value={formData.pnl_currency} onChange={handleChange} placeholder="0.00" className="w-full bg-transparent border-b border-border/50 px-0 py-2 text-sm font-medium text-foreground outline-none focus:border-primary transition-all" />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-md border border-slate-200 border-dashed bg-slate-50">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gross P&L</label>
+                  <input 
+                    required 
+                    type="number" 
+                    step="any" 
+                    name="pnl_currency" 
+                    value={formData.pnl_currency} 
+                    onChange={handleChange} 
+                    placeholder="0.00" 
+                    className="w-full bg-transparent border-b border-slate-200 px-0 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-slate-400 transition-all" 
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Comm.</label>
-                  <input type="number" step="any" name="commission" value={formData.commission} onChange={handleChange} placeholder="0.00" className="w-full bg-transparent border-b border-border/50 px-0 py-2 text-sm font-medium text-foreground outline-none focus:border-primary transition-all" />
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Comm.</label>
+                  <input 
+                    type="number" 
+                    step="any" 
+                    name="commission" 
+                    value={formData.commission} 
+                    onChange={handleChange} 
+                    placeholder="0.00" 
+                    className="w-full bg-transparent border-b border-slate-200 px-0 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-slate-400 transition-all" 
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Swap</label>
-                  <input type="number" step="any" name="swap" value={formData.swap} onChange={handleChange} placeholder="0.00" className="w-full bg-transparent border-b border-border/50 px-0 py-2 text-sm font-medium text-foreground outline-none focus:border-primary transition-all" />
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Swap</label>
+                  <input 
+                    type="number" 
+                    step="any" 
+                    name="swap" 
+                    value={formData.swap} 
+                    onChange={handleChange} 
+                    placeholder="0.00" 
+                    className="w-full bg-transparent border-b border-slate-200 px-0 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-slate-400 transition-all" 
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Net P&L</label>
-                  <div className={`w-full py-2 text-xl font-black tracking-tight flex items-center ${parseFloat(netPnl) > 0 ? 'text-emerald-500' : parseFloat(netPnl) < 0 ? 'text-rose-500' : 'text-foreground'}`}>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Net P&L</label>
+                  <div className={`w-full py-1 text-base font-bold tracking-tight flex items-center ${
+                    parseFloat(netPnl) > 0 
+                      ? 'text-emerald-600' 
+                      : parseFloat(netPnl) < 0 
+                        ? 'text-red-600' 
+                        : 'text-slate-800'
+                  }`}>
                     {parseFloat(netPnl) > 0 ? '+' : ''}${netPnl}
                   </div>
                 </div>
@@ -312,23 +410,36 @@ export function AddTradeModal({ onClose }: { onClose: () => void }) {
             </section>
 
             {/* --- 4. PSYCHOLOGY & NOTES --- */}
-            <section className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Setup</label>
+            <section className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Setup</label>
                   <CustomSelect name="setup" value={formData.setup} options={["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"]} onChange={handleChange} />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Emotion</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Emotion</label>
                   <CustomSelect name="emotion" value={formData.emotion} options={["Neutral", "Confident", "Anxious", "FOMO", "Revenge Trading"]} onChange={handleChange} />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Chart URL</label>
-                  <input name="chart_url" value={formData.chart_url} onChange={handleChange} placeholder="https://www.tradingview.com/x/..." className="w-full bg-background/50 border border-border/50 rounded-xl px-4 py-3.5 text-sm font-medium outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all backdrop-blur-sm" />
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Chart URL</label>
+                  <input 
+                    name="chart_url" 
+                    value={formData.chart_url} 
+                    onChange={handleChange} 
+                    placeholder="https://www.tradingview.com/x/..." 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:bg-white focus:border-slate-400 transition-all placeholder:text-slate-400" 
+                  />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Notes</label>
-                  <textarea name="trade_comment" value={formData.trade_comment} onChange={handleChange} placeholder="Trade execution notes..." rows={3} className="w-full bg-background/50 border border-border/50 rounded-xl px-4 py-4 text-sm font-medium outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all resize-none backdrop-blur-sm" />
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Notes</label>
+                  <textarea 
+                    name="trade_comment" 
+                    value={formData.trade_comment} 
+                    onChange={handleChange} 
+                    placeholder="Trade execution notes..." 
+                    rows={3} 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:bg-white focus:border-slate-400 transition-all resize-none placeholder:text-slate-400" 
+                  />
                 </div>
               </div>
             </section>
@@ -336,12 +447,22 @@ export function AddTradeModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Footer Actions */}
-        <div className="relative flex items-center justify-end gap-4 p-6 border-t border-white/5 shrink-0 bg-background/30 backdrop-blur-md rounded-b-2xl">
-          <button type="button" onClick={onClose} disabled={isLoading} className="px-5 py-2.5 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
+        <div className="relative flex items-center justify-end gap-3 p-4 border-t border-slate-200 bg-slate-50 shrink-0 rounded-b-md">
+          <button 
+            type="button" 
+            onClick={onClose} 
+            disabled={isLoading} 
+            className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors disabled:opacity-50"
+          >
             Cancel
           </button>
-          <button type="submit" form="add-trade-form" disabled={isLoading} className="flex items-center gap-2 bg-gradient-to-r from-primary to-violet-500 hover:brightness-110 text-white px-8 py-3 rounded-xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-primary/30 transition-all active:scale-95 disabled:opacity-70">
-            {isLoading && <Loader2 size={16} className="animate-spin" />}
+          <button 
+            type="submit" 
+            form="add-trade-form" 
+            disabled={isLoading} 
+            className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-900 text-white px-5 py-2 rounded-md text-xs font-bold uppercase tracking-wider shadow-sm active:scale-95 disabled:opacity-75 transition-all"
+          >
+            {isLoading && <Loader2 size={12} className="animate-spin" />}
             Save Trade
           </button>
         </div>

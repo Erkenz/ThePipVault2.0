@@ -26,3 +26,9 @@ export async function loginAction(formData: FormData) {
   // Succes! Stuur de gebruiker naar binnen
   redirect('/dashboard');
 }
+
+export async function logoutAction() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect('/login');
+}
