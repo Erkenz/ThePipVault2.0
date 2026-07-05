@@ -6,19 +6,32 @@ import { Trade } from "@/types/database";
 import { Activity, Plus, ChevronLeft, ChevronRight, Target, CheckCircle2, MinusCircle, Flame, TrendingUp, Wallet, Calendar } from "lucide-react";
 import { AddTradeModal } from "@/components/journal/AddTradeModal";
 
-export default function DashboardClient({ trades }: { trades: Trade[] }) {
+export default function DashboardClient({ 
+  trades,
+  userProfile
+}: { 
+  trades: Trade[]; 
+  userProfile?: { 
+    default_asset_type: string; 
+    strategies: string[]; 
+    sessions: string[]; 
+  };
+}) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // --- 1. GLOBALE STATISTIEKEN BEREKENEN ---
   const totalTrades = trades.length;
-  const wins = trades.filter((t) => t.pnl > 0);
-  const losses = trades.filter((t) => t.pnl <= 0);
+  const breakevenTrades = trades.filter((t) => t.is_breakeven);
+  const nonBreakevenTrades = trades.filter((t) => !t.is_breakeven);
+
+  const wins = nonBreakevenTrades.filter((t) => t.pnl > 0);
+  const losses = nonBreakevenTrades.filter((t) => t.pnl <= 0);
 
   const totalNetPnl = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
   const grossWin = wins.reduce((sum, t) => sum + t.pnl, 0);
   const grossLoss = losses.reduce((sum, t) => sum + Math.abs(t.pnl), 0);
   
-  const winRate = totalTrades > 0 ? (wins.length / totalTrades) * 100 : 0;
+  const winRate = nonBreakevenTrades.length > 0 ? (wins.length / nonBreakevenTrades.length) * 100 : 0;
   const profitFactor = grossLoss > 0 ? (grossWin / grossLoss) : grossWin > 0 ? 99.99 : 0;
 
   // --- 2. CUMULATIVE PNL CURVE ---
@@ -107,17 +120,23 @@ export default function DashboardClient({ trades }: { trades: Trade[] }) {
   const strategyStats = trades.reduce((acc, t) => {
     const setup = t.setup || "Other";
     if (!acc[setup]) acc[setup] = { pnl: 0, wins: 0, total: 0 };
-    acc[setup].total += 1;
     acc[setup].pnl += t.pnl;
-    if (t.pnl > 0) acc[setup].wins += 1;
+    
+    if (!t.is_breakeven) {
+      acc[setup].total += 1;
+      if (t.pnl > 0) acc[setup].wins += 1;
+    }
     return acc;
   }, {} as Record<string, { pnl: number, wins: number, total: number }>);
 
   const emotionStats = trades.reduce((acc, t) => {
     const emo = t.emotion || "Neutral";
     if (!acc[emo]) acc[emo] = { pnl: 0, total: 0 };
-    acc[emo].total += 1;
     acc[emo].pnl += t.pnl;
+    
+    if (!t.is_breakeven) {
+      acc[emo].total += 1;
+    }
     return acc;
   }, {} as Record<string, { pnl: number, total: number }>);
 
@@ -168,7 +187,9 @@ export default function DashboardClient({ trades }: { trades: Trade[] }) {
           <div className="w-full h-1.5 bg-slate-100 border border-slate-200/50 rounded-full overflow-hidden mb-2">
             <div className="h-full bg-zinc-950 rounded-full" style={{ width: `${winRate}%` }} />
           </div>
-          <div className="text-xs font-medium text-slate-500">{wins.length}W · {losses.length}L</div>
+          <div className="text-xs font-medium text-slate-500">
+            {wins.length}W · {losses.length}L{breakevenTrades.length > 0 && ` · ${breakevenTrades.length}BE`}
+          </div>
         </div>
 
         <div className="md:col-span-1 bg-white border border-slate-200 rounded-md p-6 shadow-sm flex flex-col justify-center">
@@ -370,7 +391,7 @@ export default function DashboardClient({ trades }: { trades: Trade[] }) {
           
           <div className="space-y-6">
             {Object.entries(strategyStats).sort((a, b) => b[1].pnl - a[1].pnl).map(([setup, stats]) => {
-              const setupWinRate = (stats.wins / stats.total) * 100;
+              const setupWinRate = stats.total > 0 ? (stats.wins / stats.total) * 100 : 0;
               return (
                 <div key={setup}>
                   <div className="flex justify-between items-end mb-2">
@@ -445,7 +466,7 @@ export default function DashboardClient({ trades }: { trades: Trade[] }) {
 
       {/* Quick Add Modal */}
       {isAddModalOpen && (
-        <AddTradeModal onClose={() => setIsAddModalOpen(false)} />
+        <AddTradeModal onClose={() => setIsAddModalOpen(false)} userProfile={userProfile} />
       )}
     </div>
   );

@@ -10,13 +10,15 @@ export default function AnalyticsClient({ trades }: { trades: Trade[] }) {
 
   // --- 1. CORE STATISTIEKEN BEREKENEN ---
   const totalTrades = trades.length;
-  const wins = trades.filter((t) => t.pnl > 0);
-  const losses = trades.filter((t) => t.pnl <= 0);
+  const breakevens = trades.filter((t) => t.is_breakeven);
+  const nonBreakevens = trades.filter((t) => !t.is_breakeven);
+  const wins = nonBreakevens.filter((t) => t.pnl > 0);
+  const losses = nonBreakevens.filter((t) => t.pnl <= 0);
 
   const totalNetPnl = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
   const totalFees = trades.reduce((sum, t) => sum + (t.commission || 0) + (t.swap || 0), 0);
   
-  const winRate = totalTrades > 0 ? (wins.length / totalTrades) * 100 : 0;
+  const winRate = nonBreakevens.length > 0 ? (wins.length / nonBreakevens.length) * 100 : 0;
   
   const totalWinPnl = wins.reduce((sum, t) => sum + t.pnl, 0);
   const totalLossPnl = losses.reduce((sum, t) => sum + t.pnl, 0);
@@ -34,8 +36,8 @@ export default function AnalyticsClient({ trades }: { trades: Trade[] }) {
   }, {} as Record<string, number>);
   const bestPair = Object.keys(pairStats).length > 0 ? Object.keys(pairStats).reduce((a, b) => pairStats[a] > pairStats[b] ? a : b) : "N/A";
 
-  const longs = trades.filter(t => t.direction === 'LONG');
-  const shorts = trades.filter(t => t.direction === 'SHORT');
+  const longs = nonBreakevens.filter(t => t.direction === 'LONG');
+  const shorts = nonBreakevens.filter(t => t.direction === 'SHORT');
   const longWinRate = longs.length > 0 ? (longs.filter(t => t.pnl > 0).length / longs.length) * 100 : 0;
   const shortWinRate = shorts.length > 0 ? (shorts.filter(t => t.pnl > 0).length / shorts.length) * 100 : 0;
 
@@ -166,7 +168,8 @@ export default function AnalyticsClient({ trades }: { trades: Trade[] }) {
         </Card>
         <Card title="Wins vs Losses" icon={Target}>
           <div className="text-3xl font-bold text-slate-900">
-            <span className="text-slate-800">{wins.length}W</span> <span className="text-slate-300">/</span> <span className="text-red-650">{losses.length}L</span>
+            <span className="text-slate-800">{wins.length}W</span> <span className="text-slate-350">/</span> <span className="text-red-650">{losses.length}L</span>
+            {breakevens.length > 0 && <span className="text-xs font-semibold text-blue-650 ml-1.5">{breakevens.length}BE</span>}
           </div>
           <div className="mt-2 text-xs font-medium text-slate-500">{(wins.length / (losses.length || 1)).toFixed(2)} ratio</div>
         </Card>

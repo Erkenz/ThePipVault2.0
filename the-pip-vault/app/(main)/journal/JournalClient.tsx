@@ -8,7 +8,17 @@ import { AddTradeModal } from "@/components/journal/AddTradeModal";
 import { DeleteTradeModal } from "@/components/journal/DeleteTradeModal";
 import { EditTradeModal } from "@/components/journal/EditTradeModal";
 
-export default function JournalClient({ initialTrades }: { initialTrades: Trade[] }) {
+export default function JournalClient({ 
+  initialTrades,
+  userProfile
+}: { 
+  initialTrades: Trade[]; 
+  userProfile?: { 
+    default_asset_type: string; 
+    strategies: string[]; 
+    sessions: string[]; 
+  };
+}) {
   const [searchPair, setSearchPair] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | "WIN" | "LOSS">("ALL");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -21,8 +31,8 @@ export default function JournalClient({ initialTrades }: { initialTrades: Trade[
     const matchesPair = trade.pair?.toLowerCase().includes(searchPair.toLowerCase()) ?? false;
     const matchesType = 
       filterType === "ALL" ? true : 
-      filterType === "WIN" ? trade.pnl > 0 : 
-      trade.pnl <= 0;
+      filterType === "WIN" ? (trade.pnl > 0 && !trade.is_breakeven) : 
+      (trade.pnl <= 0 && !trade.is_breakeven);
 
     return matchesPair && matchesType;
   });
@@ -147,9 +157,10 @@ export default function JournalClient({ initialTrades }: { initialTrades: Trade[
           </div>
         ) : (
           filteredTrades.map((trade) => {
-            const isWin = trade.pnl > 0;
-            const isLoss = trade.pnl < 0;
-            const outcomeText = isWin ? "text-emerald-600" : isLoss ? "text-red-650" : "text-zinc-500";
+             const isWin = trade.pnl > 0 && !trade.is_breakeven;
+             const isLoss = trade.pnl < 0 && !trade.is_breakeven;
+             const isBreakeven = trade.is_breakeven;
+             const outcomeText = isBreakeven ? "text-blue-600" : isWin ? "text-emerald-600" : isLoss ? "text-red-650" : "text-zinc-500";
             
             return (
               <div 
@@ -198,6 +209,11 @@ export default function JournalClient({ initialTrades }: { initialTrades: Trade[
                     <div>
                       <div className="flex items-center gap-2 mb-1.5">
                         <h2 className="text-lg font-bold text-zinc-900 tracking-tight uppercase">{trade.pair}</h2>
+                        {trade.is_breakeven && (
+                          <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-[9px] font-bold text-blue-700 tracking-wider uppercase">
+                            Breakeven
+                          </span>
+                        )}
                         {trade.session && (
                           <span className="px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200 text-[9px] font-bold text-zinc-500 tracking-wider uppercase">
                             {trade.session}
@@ -307,13 +323,14 @@ export default function JournalClient({ initialTrades }: { initialTrades: Trade[
 
       {/* Add Trade Modal */}
       {isAddModalOpen && (
-        <AddTradeModal onClose={() => setIsAddModalOpen(false)} />
+        <AddTradeModal onClose={() => setIsAddModalOpen(false)} userProfile={userProfile} />
       )}
       {/* Edit Trade Modal */}
       {tradeToEdit && (
         <EditTradeModal 
           trade={tradeToEdit} 
           onClose={() => setTradeToEdit(null)} 
+          userProfile={userProfile}
         />
       )}
 

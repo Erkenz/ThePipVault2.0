@@ -24,5 +24,22 @@ export default async function DashboardPage() {
 
   const typedTrades = (trades || []) as Trade[];
 
-  return <DashboardClient trades={typedTrades} />;
+  // Fetch user profile settings for trade defaults
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("asset_class, strategies, sessions")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const userProfile = {
+    default_asset_type: profile?.asset_class || "forex",
+    strategies: profile?.strategies && profile.strategies.length > 0 
+      ? profile.strategies 
+      : ["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"],
+    sessions: profile?.sessions && profile.sessions.length > 0 
+      ? profile.sessions 
+      : ["London", "New York", "Tokyo", "Sydney"],
+  };
+
+  return <DashboardClient trades={typedTrades} userProfile={userProfile} />;
 }

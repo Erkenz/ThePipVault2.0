@@ -21,11 +21,27 @@ export default async function JournalPage() {
 
   if (error) {
     console.error("Error fetching trades:", error.message);
-    // In een volgende iteratie kunnen we hier error-boundaries of toast notifications server-side afvangen
   }
 
   const typedTrades = (trades || []) as Trade[];
 
-  // 3. Render client component with data
-  return <JournalClient initialTrades={typedTrades} />;
+  // 3. Fetch user profile settings for trade defaults
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("asset_class, strategies, sessions")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const userProfile = {
+    default_asset_type: profile?.asset_class || "forex",
+    strategies: profile?.strategies && profile.strategies.length > 0 
+      ? profile.strategies 
+      : ["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"],
+    sessions: profile?.sessions && profile.sessions.length > 0 
+      ? profile.sessions 
+      : ["London", "New York", "Tokyo", "Sydney"],
+  };
+
+  // 4. Render client component with data
+  return <JournalClient initialTrades={typedTrades} userProfile={userProfile} />;
 }

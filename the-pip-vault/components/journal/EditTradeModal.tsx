@@ -2,74 +2,24 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X, TrendingUp, TrendingDown, Activity, Crosshair, Wallet, Loader2, ChevronDown, Edit3, Calendar } from "lucide-react";
+import { X, TrendingUp, TrendingDown, Activity, Crosshair, Wallet, Loader2, Edit3, Calendar } from "lucide-react";
 import { updateTradeAction } from "@/app/(main)/journal/actions";
 import { Trade } from "@/types/database";
+import CustomSelect from "./CustomSelect";
 
-// --- CUSTOM DROPDOWN COMPONENT (Enterprise SaaS Style) ---
-const CustomSelect = ({ 
-  name, 
-  value, 
-  options, 
-  onChange 
+
+export function EditTradeModal({ 
+  trade, 
+  onClose,
+  userProfile
 }: { 
-  name: string; 
-  value: string; 
-  options: string[]; 
-  onChange: (e: any) => void 
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Sluit de dropdown als je erbuiten klikt
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  return (
-    <div ref={dropdownRef} className="relative w-full">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex justify-between items-center bg-slate-50 border rounded-md px-3 py-2 text-xs font-medium text-slate-800 outline-none transition-all ${
-          isOpen ? "border-slate-400 bg-white" : "border-slate-200 hover:border-slate-350"
-        }`}
-      >
-        <span>{value || "Selecteer..."}</span>
-        <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-50 top-[calc(100%+4px)] left-0 w-full bg-white border border-slate-200 rounded-md shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
-          <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
-            {options.map((opt) => (
-              <div
-                key={opt}
-                onClick={() => {
-                  onChange({ target: { name, value: opt } });
-                  setIsOpen(false);
-                }}
-                className={`px-3 py-2 text-xs rounded cursor-pointer transition-colors ${
-                  value === opt ? "bg-slate-100 text-slate-900 font-bold" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                {opt}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export function EditTradeModal({ trade, onClose }: { trade: Trade; onClose: () => void }) {
+  trade: Trade; 
+  onClose: () => void; 
+  userProfile?: { 
+    strategies: string[]; 
+    sessions: string[]; 
+  };
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,6 +43,7 @@ export function EditTradeModal({ trade, onClose }: { trade: Trade; onClose: () =
     emotion: trade.emotion || "Neutral",
     chart_url: trade.chart_url || "",
     trade_comment: trade.trade_comment || "",
+    is_breakeven: trade.is_breakeven || false,
   });
 
   // LOGICA: Exact hetzelfde als de AddTradeModal
@@ -140,6 +91,7 @@ export function EditTradeModal({ trade, onClose }: { trade: Trade; onClose: () =
       date: new Date(formData.date).toISOString(),
       exit_date: formData.exit_date ? new Date(formData.exit_date).toISOString() : null,
       asset_type: formData.asset_type.toLowerCase(),
+      is_breakeven: formData.is_breakeven,
     };
 
     const result = await updateTradeAction(trade.id, payload);
@@ -240,7 +192,7 @@ export function EditTradeModal({ trade, onClose }: { trade: Trade; onClose: () =
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session</label>
-                  <CustomSelect name="session" value={formData.session} options={["London", "New York", "Tokyo", "Sydney"]} onChange={handleChange} />
+                  <CustomSelect name="session" value={formData.session} options={userProfile?.sessions && userProfile.sessions.length > 0 ? userProfile.sessions : ["London", "New York", "Tokyo", "Sydney"]} onChange={handleChange} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Asset Class</label>
@@ -398,6 +350,20 @@ export function EditTradeModal({ trade, onClose }: { trade: Trade; onClose: () =
                   </div>
                 </div>
               </div>
+              
+              <div className="flex items-center gap-2 mt-3 pl-1">
+                <input 
+                  type="checkbox" 
+                  id="is_breakeven" 
+                  name="is_breakeven" 
+                  checked={formData.is_breakeven} 
+                  onChange={(e) => setFormData({ ...formData, is_breakeven: e.target.checked })}
+                  className="rounded border-slate-200 text-slate-900 focus:ring-slate-400 h-4 w-4 bg-slate-50 outline-none cursor-pointer" 
+                />
+                <label htmlFor="is_breakeven" className="text-xs font-bold text-slate-700 select-none cursor-pointer">
+                  Mark this trade as Breakeven
+                </label>
+              </div>
             </section>
 
             {/* --- 4. PSYCHOLOGY & NOTES --- */}
@@ -405,7 +371,7 @@ export function EditTradeModal({ trade, onClose }: { trade: Trade; onClose: () =
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Setup</label>
-                  <CustomSelect name="setup" value={formData.setup} options={["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"]} onChange={handleChange} />
+                  <CustomSelect name="setup" value={formData.setup} options={userProfile?.strategies && userProfile.strategies.length > 0 ? userProfile.strategies : ["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"]} onChange={handleChange} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Emotion</label>

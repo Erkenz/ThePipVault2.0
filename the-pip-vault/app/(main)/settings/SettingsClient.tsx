@@ -19,6 +19,7 @@ import {
   resetProfileSettings, 
   deleteAccountAction 
 } from "./actions";
+import CustomSelect from "@/components/journal/CustomSelect";
 
 interface Profile {
   first_name: string;
@@ -27,7 +28,23 @@ interface Profile {
   starting_equity: number | string;
   strategies: string[];
   sessions: string[];
+  asset_class: string;
 }
+
+const currencyOptions = [
+  { label: "USD ($)", value: "USD" },
+  { label: "EUR (€)", value: "EUR" },
+  { label: "GBP (£)", value: "GBP" },
+  { label: "JPY (¥)", value: "JPY" },
+  { label: "AUD (A$)", value: "AUD" },
+  { label: "CAD (C$)", value: "CAD" },
+  { label: "CHF (Fr)", value: "CHF" },
+];
+
+const assetOptions = [
+  { label: "Forex", value: "forex" },
+  { label: "Futures", value: "futures" }
+];
 
 export default function SettingsClient({
   initialProfile,
@@ -51,7 +68,7 @@ export default function SettingsClient({
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   // Input changes (allowing empty inputs for numeric properties while typing)
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     setProfile(prev => ({
       ...prev,
@@ -145,7 +162,8 @@ export default function SettingsClient({
           currency: "USD",
           starting_equity: 0,
           strategies: ["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"],
-          sessions: ["London", "New York", "Tokyo", "Sydney"]
+          sessions: ["London", "New York", "Tokyo", "Sydney"],
+          asset_class: "forex"
         }));
         router.refresh();
       }
@@ -260,25 +278,17 @@ export default function SettingsClient({
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Default Currency
               </label>
-              <select
+              <CustomSelect
                 name="currency"
                 value={profile.currency}
+                options={currencyOptions}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:bg-white focus:border-slate-400 transition-all h-[34px]"
-              >
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="JPY">JPY (¥)</option>
-                <option value="AUD">AUD (A$)</option>
-                <option value="CAD">CAD (C$)</option>
-                <option value="CHF">CHF (Fr)</option>
-              </select>
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -290,7 +300,18 @@ export default function SettingsClient({
                 name="starting_equity"
                 value={profile.starting_equity}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:bg-white focus:border-slate-400 transition-all"
+                className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:bg-white focus:border-slate-400 transition-all h-[34px]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Default Asset Class
+              </label>
+              <CustomSelect
+                name="asset_class"
+                value={profile.asset_class}
+                options={assetOptions}
+                onChange={handleChange}
               />
             </div>
           </div>

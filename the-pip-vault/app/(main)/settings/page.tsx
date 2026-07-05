@@ -35,6 +35,7 @@ export default async function SettingsPage() {
     sessions: profile?.sessions && profile.sessions.length > 0 
       ? profile.sessions 
       : ["London", "New York", "Tokyo", "Sydney"],
+    asset_class: profile?.asset_class || "forex",
   };
 
   return (

@@ -22,4 +22,5 @@ export type Trade = {
   trade_comment: string | null;
   asset_type: 'forex' | 'futures' | string | null;
   account_type: string | null;
+  is_breakeven: boolean;
 };

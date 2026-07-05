@@ -10,6 +10,7 @@ export interface ProfileUpdateInput {
   starting_equity: number;
   strategies: string[];
   sessions: string[];
+  asset_class: string;
 }
 
 export async function updateProfileSettings(profileData: ProfileUpdateInput) {
@@ -40,6 +41,7 @@ export async function updateProfileSettings(profileData: ProfileUpdateInput) {
       starting_equity: Number(profileData.starting_equity) || 0,
       strategies: profileData.strategies || [],
       sessions: profileData.sessions || [],
+      asset_class: profileData.asset_class?.toLowerCase() || 'forex',
     })
     .eq('id', user.id);
 
@@ -75,6 +77,7 @@ export async function resetProfileSettings() {
       starting_equity: 0,
       strategies: defaultStrategies,
       sessions: defaultSessions,
+      asset_class: 'forex',
     })
     .eq('id', user.id);
 
