@@ -11,7 +11,8 @@ import CustomSelect from "./CustomSelect";
 export function EditTradeModal({ 
   trade, 
   onClose,
-  userProfile
+  userProfile,
+  accounts = []
 }: { 
   trade: Trade; 
   onClose: () => void; 
@@ -19,6 +20,7 @@ export function EditTradeModal({
     strategies: string[]; 
     sessions: string[]; 
   };
+  accounts?: any[];
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,8 @@ export function EditTradeModal({
     date: trade.date ? new Date(trade.date).toISOString().slice(0, 16) : "",
     exit_date: trade.exit_date ? new Date(trade.exit_date).toISOString().slice(0, 16) : "",
     direction: trade.direction as "LONG" | "SHORT",
-    account_type: trade.account_type || "FTMO 50K (Funded)",
+    account_id: trade.account_id || "",
+    account_type: trade.account_type || "",
     session: trade.session || "London",
     asset_type: trade.asset_type || "forex",
     entry_price: trade.entry_price?.toString() || "",
@@ -77,6 +80,7 @@ export function EditTradeModal({
     setIsLoading(true);
     setError(null);
 
+    const selectedAcc = accounts.find(a => a.id === formData.account_id);
     const payload = {
       ...formData,
       entry_price: parseFloat(formData.entry_price),
@@ -92,6 +96,8 @@ export function EditTradeModal({
       exit_date: formData.exit_date ? new Date(formData.exit_date).toISOString() : null,
       asset_type: formData.asset_type.toLowerCase(),
       is_breakeven: formData.is_breakeven,
+      account_id: formData.account_id || null,
+      account_type: selectedAcc ? `${selectedAcc.name} (${selectedAcc.type})` : formData.account_type,
     };
 
     const result = await updateTradeAction(trade.id, payload);
@@ -377,6 +383,16 @@ export function EditTradeModal({
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Emotion</label>
                   <CustomSelect name="emotion" value={formData.emotion} options={["Neutral", "Confident", "Anxious", "FOMO", "Revenge Trading"]} onChange={handleChange} />
                 </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account</label>
+                  <CustomSelect
+                    name="account_id"
+                    value={formData.account_id}
+                    options={accounts.map(a => ({ label: `${a.name} (${a.type} · ${a.currency})`, value: a.id }))}
+                    onChange={handleChange}
+                  />
+                </div>
+
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Chart URL</label>
                   <input 

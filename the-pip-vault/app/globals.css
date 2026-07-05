@@ -14,6 +14,11 @@
   --color-profit: #22c55e;
   --color-loss: #ff4560;
   --color-gold: #fbbf24;
+
+  --color-red-650: #e11d48;
+  --color-red-250: #fecdd3;
+  --color-emerald-650: #059669;
+  --color-emerald-250: #a7f3d0;
 }
 
 @layer base {

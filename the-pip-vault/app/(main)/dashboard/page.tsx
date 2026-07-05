@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import DashboardClient from "./DashboardClient";
 import { Trade } from "@/types/database";
 
+import { cookies } from "next/headers";
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -11,12 +13,28 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Haal alle trades op voor het dashboard, chronologisch gesorteerd
-  const { data: trades, error } = await supabase
-    .from("trades")
+  // 1. Read selection cookie
+  const cookieStore = await cookies();
+  const selectedAccountId = cookieStore.get("selected_account_id")?.value || "overall";
+
+  // 2. Fetch user's accounts list
+  const { data: accounts } = await supabase
+    .from("accounts")
     .select("*")
     .eq("user_id", user.id)
-    .order("date", { ascending: true });
+    .order("name", { ascending: true });
+
+  // 3. Haal trades op gefilterd per geselecteerd account
+  let tradesQuery = supabase
+    .from("trades")
+    .select("*")
+    .eq("user_id", user.id);
+
+  if (selectedAccountId !== "overall") {
+    tradesQuery = tradesQuery.eq("account_id", selectedAccountId);
+  }
+
+  const { data: trades, error } = await tradesQuery.order("date", { ascending: true });
 
   if (error) {
     console.error("Error fetching trades:", error.message);
@@ -41,5 +59,5 @@ export default async function DashboardPage() {
       : ["London", "New York", "Tokyo", "Sydney"],
   };
 
-  return <DashboardClient trades={typedTrades} userProfile={userProfile} />;
+  return <DashboardClient trades={typedTrades} userProfile={userProfile} accounts={accounts || []} />;
 }

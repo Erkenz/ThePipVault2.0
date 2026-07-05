@@ -2,24 +2,69 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X, TrendingUp, TrendingDown, Activity, Crosshair, Wallet, Loader2, Calculator, Calendar } from "lucide-react";
+import { X, TrendingUp, TrendingDown, Activity, Crosshair, Wallet, Loader2, Calculator, Calendar, ChevronDown } from "lucide-react";
 import { addTradeAction } from "@/app/(main)/journal/actions";
 import CustomSelect from "./CustomSelect";
 
+interface Account {
+  id: string;
+  name: string;
+  type: string;
+  currency: string;
+  is_default: boolean;
+}
 
 export function AddTradeModal({ 
   onClose,
-  userProfile
+  userProfile,
+  accounts = []
 }: { 
   onClose: () => void;
   userProfile?: { 
     default_asset_type: string; 
     strategies: string[]; 
     sessions: string[]; 
-  }; 
+  };
+  accounts?: Account[];
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Multi-select accounts state
+  const [isCopyTrade, setIsCopyTrade] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
+  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
+  const accountDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Pre-select default account or first account on mount
+  useEffect(() => {
+    if (accounts && accounts.length > 0) {
+      const defaultAcc = accounts.find(a => a.is_default);
+      const initialId = defaultAcc ? defaultAcc.id : accounts[0].id;
+      setSelectedAccountId(initialId);
+      setSelectedAccountIds([initialId]);
+    }
+  }, [accounts]);
+
+  // Click outside listener for accounts dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
+        setIsAccountDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleAccountToggle = (accountId: string) => {
+    setSelectedAccountIds(prev => 
+      prev.includes(accountId) 
+        ? prev.filter(id => id !== accountId) 
+        : [...prev, accountId]
+    );
+  };
 
   // Default values based on settings
   const defaultAsset = userProfile?.default_asset_type 
@@ -88,6 +133,14 @@ export function AddTradeModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const activeAccountIds = isCopyTrade ? selectedAccountIds : (selectedAccountId ? [selectedAccountId] : []);
+
+    if (activeAccountIds.length === 0) {
+      setError("Please select at least one account to log the trade.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -106,6 +159,7 @@ export function AddTradeModal({
       exit_date: formData.exit_date ? new Date(formData.exit_date).toISOString() : null,
       asset_type: formData.asset_type.toLowerCase(),
       is_breakeven: formData.is_breakeven,
+      selectedAccountIds: activeAccountIds, // Pass active accounts array
     };
 
     const result = await addTradeAction(payload);
@@ -396,6 +450,69 @@ export function AddTradeModal({
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Emotion</label>
                   <CustomSelect name="emotion" value={formData.emotion} options={["Neutral", "Confident", "Anxious", "FOMO", "Revenge Trading"]} onChange={handleChange} />
                 </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account(s)</label>
+                    <label className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={isCopyTrade}
+                        onChange={(e) => setIsCopyTrade(e.target.checked)}
+                        className="rounded border-slate-200 text-slate-900 focus:ring-slate-400 h-3.5 w-3.5 bg-slate-50 cursor-pointer"
+                      />
+                      <span>Copy Trade</span>
+                    </label>
+                  </div>
+                  
+                  {!isCopyTrade ? (
+                    <CustomSelect
+                      name="selectedAccountId"
+                      value={selectedAccountId}
+                      options={accounts.map(a => ({ label: `${a.name} (${a.type} · ${a.currency})`, value: a.id }))}
+                      onChange={(e) => setSelectedAccountId(e.target.value)}
+                    />
+                  ) : (
+                    <div className="relative" ref={accountDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsAccountDropdownOpen(!isAccountDropdownOpen)}
+                        className={`w-full flex justify-between items-center bg-slate-50 border rounded-md px-3 py-2 text-xs font-semibold text-slate-800 outline-none transition-all duration-155 h-[34px] ${
+                          isAccountDropdownOpen ? "border-slate-400 bg-white" : "border-slate-200"
+                        }`}
+                      >
+                        <span className="truncate">
+                          {selectedAccountIds.length === 0 
+                            ? "Select Accounts..." 
+                            : `${selectedAccountIds.length} Account(s) Selected (${accounts.filter(a => selectedAccountIds.includes(a.id)).map(a => a.name).join(", ")})`}
+                        </span>
+                        <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isAccountDropdownOpen ? "rotate-180" : ""}`} />
+                      </button>
+                      {isAccountDropdownOpen && (
+                        <div className="absolute z-50 bottom-[calc(100%+4px)] left-0 w-full bg-white border border-slate-200 rounded-md shadow-lg p-2 max-h-[160px] overflow-y-auto space-y-1 animate-in fade-in zoom-in-95 duration-100">
+                          {accounts.length === 0 ? (
+                            <div className="text-xs text-slate-400 italic p-2 text-center">No accounts found. Please add accounts first.</div>
+                          ) : (
+                            accounts.map(acc => {
+                              const isChecked = selectedAccountIds.includes(acc.id);
+                              return (
+                                <label key={acc.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 cursor-pointer select-none text-xs font-semibold text-slate-700">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => handleAccountToggle(acc.id)}
+                                    className="rounded border-slate-200 text-slate-900 focus:ring-slate-450 h-4 w-4 bg-slate-50 outline-none cursor-pointer"
+                                  />
+                                  <span>{acc.name} ({acc.type} · {acc.currency})</span>
+                                </label>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Chart URL</label>
                   <input 

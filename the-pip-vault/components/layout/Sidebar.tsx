@@ -3,23 +3,40 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, BarChart2, Settings, Plus, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, BookOpen, BarChart2, Settings, Plus, ChevronLeft, ChevronRight, LogOut, Wallet } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
 
-export function Sidebar() {
+interface SidebarProps {
+  initialAccounts: {
+    id: string;
+    name: string;
+    currency: string;
+  }[];
+  selectedAccountId: string;
+}
+
+export function Sidebar({ initialAccounts, selectedAccountId }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Journal", href: "/journal", icon: BookOpen },
     { name: "Analytics", href: "/analytics", icon: BarChart2 },
+    { name: "Accounts", href: "/accounts", icon: Wallet },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 
   const handleLogout = async () => {
     await logoutAction();
+  };
+
+  const handleAccountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    document.cookie = `selected_account_id=${val}; path=/; max-age=31536000; SameSite=Lax`;
+    router.refresh();
   };
 
   return (
@@ -29,7 +46,7 @@ export function Sidebar() {
       }`}
     >
       {/* Logo Area */}
-      <div className="flex h-14 items-center justify-between px-4 border-b border-zinc-900">
+      <div className="flex h-14 items-center justify-between px-4 border-b border-zinc-900 shrink-0">
         <div className="flex items-center gap-2.5 overflow-hidden">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-900 border border-zinc-800 text-white shadow-sm">
             <span className="font-bold text-sm tracking-tight">P</span>
@@ -40,6 +57,33 @@ export function Sidebar() {
             </span>
           )}
         </div>
+      </div>
+
+      {/* Account Selector */}
+      <div className="px-3 py-3 border-b border-zinc-900 flex flex-col gap-1 overflow-hidden shrink-0">
+        {!isCollapsed ? (
+          <>
+            <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block px-1">
+              Account View
+            </label>
+            <select
+              value={selectedAccountId}
+              onChange={handleAccountChange}
+              className="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-md px-2 py-1.5 text-[11px] font-bold focus:border-zinc-700 outline-none cursor-pointer transition-colors"
+            >
+              <option value="overall">Overall (All accounts)</option>
+              {initialAccounts.map(acc => (
+                <option key={acc.id} value={acc.id}>
+                  {acc.name} ({acc.currency})
+                </option>
+              ))}
+            </select>
+          </>
+        ) : (
+          <div className="h-8 flex items-center justify-center text-zinc-400" title={`Active: ${selectedAccountId === "overall" ? "Overall" : "Filtered Account"}`}>
+            <Wallet size={16} />
+          </div>
+        )}
       </div>
 
       {/* Main Action */}

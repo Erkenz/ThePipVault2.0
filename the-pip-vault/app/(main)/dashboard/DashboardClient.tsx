@@ -8,7 +8,8 @@ import { AddTradeModal } from "@/components/journal/AddTradeModal";
 
 export default function DashboardClient({ 
   trades,
-  userProfile
+  userProfile,
+  accounts = []
 }: { 
   trades: Trade[]; 
   userProfile?: { 
@@ -16,6 +17,7 @@ export default function DashboardClient({
     strategies: string[]; 
     sessions: string[]; 
   };
+  accounts?: any[];
 }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -466,7 +468,7 @@ export default function DashboardClient({
 
       {/* Quick Add Modal */}
       {isAddModalOpen && (
-        <AddTradeModal onClose={() => setIsAddModalOpen(false)} userProfile={userProfile} />
+        <AddTradeModal onClose={() => setIsAddModalOpen(false)} userProfile={userProfile} accounts={accounts} />
       )}
     </div>
   );

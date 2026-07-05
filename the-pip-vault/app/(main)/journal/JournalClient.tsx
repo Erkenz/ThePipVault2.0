@@ -10,7 +10,8 @@ import { EditTradeModal } from "@/components/journal/EditTradeModal";
 
 export default function JournalClient({ 
   initialTrades,
-  userProfile
+  userProfile,
+  accounts = []
 }: { 
   initialTrades: Trade[]; 
   userProfile?: { 
@@ -18,6 +19,7 @@ export default function JournalClient({
     strategies: string[]; 
     sessions: string[]; 
   };
+  accounts?: any[];
 }) {
   const [searchPair, setSearchPair] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | "WIN" | "LOSS">("ALL");
@@ -53,12 +55,12 @@ export default function JournalClient({
           className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/90 p-4 cursor-zoom-out"
           onClick={() => setLightboxImage(null)}
         >
-          <div className="relative w-full max-w-6xl h-[85vh] rounded border border-zinc-805 overflow-hidden shadow-2xl">
+          <div className="relative max-w-6xl max-h-[85vh] rounded overflow-hidden shadow-2xl bg-transparent">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={lightboxImage} 
               alt="Expanded Chart View" 
-              className="w-full h-full object-contain bg-zinc-900" 
+              className="max-w-full max-h-[85vh] object-contain rounded" 
             />
           </div>
         </div>
@@ -160,7 +162,7 @@ export default function JournalClient({
              const isWin = trade.pnl > 0 && !trade.is_breakeven;
              const isLoss = trade.pnl < 0 && !trade.is_breakeven;
              const isBreakeven = trade.is_breakeven;
-             const outcomeText = isBreakeven ? "text-blue-600" : isWin ? "text-emerald-600" : isLoss ? "text-red-650" : "text-zinc-500";
+             const outcomeText = isBreakeven ? "text-blue-600" : isWin ? "text-emerald-600" : isLoss ? "text-red-600" : "text-zinc-500";
             
             return (
               <div 
@@ -169,7 +171,7 @@ export default function JournalClient({
               >
                 {/* --- CHART IMAGE PREVIEW --- */}
                 <div 
-                  className="relative w-full xl:w-[260px] h-[180px] xl:h-auto shrink-0 group/image cursor-pointer overflow-hidden bg-zinc-50 border-r border-zinc-200"
+                  className="relative w-full xl:w-[260px] h-[180px] xl:h-auto min-h-[180px] shrink-0 group/image cursor-pointer overflow-hidden bg-zinc-50 border-r border-zinc-200"
                   onClick={() => trade.chart_url && setLightboxImage(trade.chart_url)}
                 >
                   {trade.chart_url ? (
@@ -178,7 +180,7 @@ export default function JournalClient({
                       <img 
                         src={trade.chart_url} 
                         alt={trade.pair} 
-                        className="w-full h-full object-cover opacity-90 group-hover/image:opacity-100 group-hover/image:scale-105 transition-all duration-500 min-h-[180px] xl:min-h-full" 
+                        className="absolute -top-[6%] -bottom-[6%] left-0 w-full h-[112%] object-cover opacity-90 group-hover/image:opacity-100 group-hover/image:scale-105 transition-all duration-500" 
                         onError={(e) => { 
                           e.currentTarget.style.display = 'none'; 
                         }} 
@@ -196,7 +198,7 @@ export default function JournalClient({
                     </div>
                   )}
                   {/* Direction Badge */}
-                  <div className={`absolute top-3 left-3 z-10 px-2 py-0.5 rounded text-[9px] font-bold tracking-wider text-white ${trade.direction === 'LONG' ? 'bg-emerald-600' : 'bg-red-650'}`}>
+                  <div className={`absolute top-3 left-3 z-10 px-2 py-0.5 rounded text-[9px] font-bold tracking-wider text-white ${trade.direction === 'LONG' ? 'bg-emerald-600' : 'bg-red-600'}`}>
                     {trade.direction}
                   </div>
                 </div>
@@ -217,6 +219,11 @@ export default function JournalClient({
                         {trade.session && (
                           <span className="px-2 py-0.5 rounded bg-zinc-50 border border-zinc-200 text-[9px] font-bold text-zinc-500 tracking-wider uppercase">
                             {trade.session}
+                          </span>
+                        )}
+                        {trade.account_type && (
+                          <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-950 text-[9px] font-bold text-zinc-100 tracking-wider uppercase">
+                            {trade.account_type}
                           </span>
                         )}
                       </div>
@@ -276,12 +283,12 @@ export default function JournalClient({
                       <div className="w-px h-5 bg-zinc-200 hidden md:block" />
                       <div>
                         <span className="text-[9px] font-bold tracking-wider text-red-500/70 uppercase block mb-0.5">SL</span>
-                        <span className="text-xs font-bold text-red-650">{trade.stop_loss || '-'}</span>
+                        <span className="text-xs font-bold text-zinc-850">{trade.stop_loss || '-'}</span>
                       </div>
                       <div className="w-px h-5 bg-zinc-200 hidden md:block" />
                       <div>
                         <span className="text-[9px] font-bold tracking-wider text-emerald-500/70 uppercase block mb-0.5">TP</span>
-                        <span className="text-xs font-bold text-emerald-650">{trade.take_profit || '-'}</span>
+                        <span className="text-xs font-bold text-zinc-850">{trade.take_profit || '-'}</span>
                       </div>
                       <div className="w-px h-5 bg-zinc-200 hidden md:block" />
                       <div>
@@ -323,7 +330,7 @@ export default function JournalClient({
 
       {/* Add Trade Modal */}
       {isAddModalOpen && (
-        <AddTradeModal onClose={() => setIsAddModalOpen(false)} userProfile={userProfile} />
+        <AddTradeModal onClose={() => setIsAddModalOpen(false)} userProfile={userProfile} accounts={accounts} />
       )}
       {/* Edit Trade Modal */}
       {tradeToEdit && (
@@ -331,6 +338,7 @@ export default function JournalClient({
           trade={tradeToEdit} 
           onClose={() => setTradeToEdit(null)} 
           userProfile={userProfile}
+          accounts={accounts}
         />
       )}
 
