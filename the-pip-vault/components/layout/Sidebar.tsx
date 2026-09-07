@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, BookOpen, BarChart2, Settings, Plus, ChevronLeft, ChevronRight, LogOut, Wallet } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
+import CustomSelect from "@/components/journal/CustomSelect";
 
 interface SidebarProps {
   initialAccounts: {
@@ -33,7 +34,7 @@ export function Sidebar({ initialAccounts, selectedAccountId }: SidebarProps) {
     await logoutAction();
   };
 
-  const handleAccountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleAccountChange = (e: { target: { name: string; value: any } }) => {
     const val = e.target.value;
     document.cookie = `selected_account_id=${val}; path=/; max-age=31536000; SameSite=Lax`;
     router.refresh();
@@ -60,24 +61,25 @@ export function Sidebar({ initialAccounts, selectedAccountId }: SidebarProps) {
       </div>
 
       {/* Account Selector */}
-      <div className="px-3 py-3 border-b border-zinc-900 flex flex-col gap-1 overflow-hidden shrink-0">
+      <div className="px-3 py-3 border-b border-zinc-900 flex flex-col gap-1 shrink-0">
         {!isCollapsed ? (
           <>
             <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block px-1">
               Account View
             </label>
-            <select
+            <CustomSelect
+              name="selectedAccountId"
               value={selectedAccountId}
+              options={[
+                { label: "Overall (All accounts)", value: "overall" },
+                ...initialAccounts.map(acc => ({
+                  label: `${acc.name} (${acc.currency})`,
+                  value: acc.id
+                }))
+              ]}
               onChange={handleAccountChange}
-              className="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-md px-2 py-1.5 text-[11px] font-bold focus:border-zinc-700 outline-none cursor-pointer transition-colors"
-            >
-              <option value="overall">Overall (All accounts)</option>
-              {initialAccounts.map(acc => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.name} ({acc.currency})
-                </option>
-              ))}
-            </select>
+              variant="dark"
+            />
           </>
         ) : (
           <div className="h-8 flex items-center justify-center text-zinc-400" title={`Active: ${selectedAccountId === "overall" ? "Overall" : "Filtered Account"}`}>

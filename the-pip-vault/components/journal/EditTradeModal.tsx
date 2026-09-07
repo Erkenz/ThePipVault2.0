@@ -191,11 +191,7 @@ export function EditTradeModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account</label>
-                  <CustomSelect name="account_type" value={formData.account_type} options={["FTMO 50K (Funded)", "Personal Live", "Demo"]} onChange={handleChange} />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session</label>
                   <CustomSelect name="session" value={formData.session} options={userProfile?.sessions && userProfile.sessions.length > 0 ? userProfile.sessions : ["London", "New York", "Tokyo", "Sydney"]} onChange={handleChange} />

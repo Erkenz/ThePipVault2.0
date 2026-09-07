@@ -3,7 +3,7 @@
 
 import { useState, useRef } from "react";
 import { Trade } from "@/types/database";
-import { Activity, Plus, ChevronLeft, ChevronRight, Target, CheckCircle2, MinusCircle, Flame, TrendingUp, Wallet, Calendar } from "lucide-react";
+import { Activity, Plus, ChevronLeft, ChevronRight, Target, CheckCircle2, MinusCircle, Flame, TrendingUp, Wallet, Calendar, AlertTriangle } from "lucide-react";
 import { AddTradeModal } from "@/components/journal/AddTradeModal";
 
 export default function DashboardClient({ 
@@ -141,6 +141,68 @@ export default function DashboardClient({
     }
     return acc;
   }, {} as Record<string, { pnl: number, total: number }>);
+
+  // Combine standard list with any other custom emotions from database
+  const emotionsList = ["Confident", "Neutral", "Anxious", "FOMO", "Revenge Trading"];
+  const uniqueTradedEmotions = Object.keys(emotionStats);
+  const displayEmotions = Array.from(new Set([...emotionsList, ...uniqueTradedEmotions]));
+
+  const emotionConfig: Record<string, {
+    borderColor: string;
+    textColor: string;
+    icon: any;
+    label: string;
+    description: string;
+  }> = {
+    "Confident": {
+      borderColor: "border-emerald-500",
+      textColor: "text-emerald-600",
+      icon: CheckCircle2,
+      label: "Confident",
+      description: "Flow State"
+    },
+    "Neutral": {
+      borderColor: "border-slate-300",
+      textColor: "text-slate-500",
+      icon: MinusCircle,
+      label: "Neutral",
+      description: "Balanced"
+    },
+    "Anxious": {
+      borderColor: "border-amber-500",
+      textColor: "text-amber-600",
+      icon: AlertTriangle,
+      label: "Anxious",
+      description: "Hesitant"
+    },
+    "FOMO": {
+      borderColor: "border-orange-500",
+      textColor: "text-orange-600",
+      icon: Target,
+      label: "FOMO",
+      description: "Fear of Missing"
+    },
+    "Revenge Trading": {
+      borderColor: "border-red-500",
+      textColor: "text-red-600",
+      icon: Flame,
+      label: "Revenge",
+      description: "Forced Recovery"
+    }
+  };
+
+  const getEmotionConfig = (emotion: string) => {
+    const foundKey = Object.keys(emotionConfig).find(k => k.toLowerCase() === emotion.toLowerCase());
+    if (foundKey) return emotionConfig[foundKey];
+    
+    return {
+      borderColor: "border-slate-300",
+      textColor: "text-slate-500",
+      icon: MinusCircle,
+      label: emotion,
+      description: "Custom State"
+    };
+  };
 
   return (
     <div className="flex-1 w-full max-w-[1600px] mx-auto p-6 lg:p-10 space-y-6">
@@ -420,47 +482,31 @@ export default function DashboardClient({
           </div>
           <h2 className="text-lg font-bold text-slate-900 mb-6">P&L by emotional state</h2>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            
-            <div className="bg-emerald-50 border border-emerald-200 rounded-md p-5 flex flex-col justify-between">
-              <div className="flex items-center gap-2 text-emerald-600 mb-4">
-                <CheckCircle2 size={16} />
-                <span className="text-xs font-bold text-emerald-700">Confident</span>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-emerald-700 mb-1">
-                  {emotionStats["Confident"] ? (emotionStats["Confident"].pnl >= 0 ? '+' : '') + '$' + emotionStats["Confident"].pnl.toFixed(2) : '$0.00'}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {displayEmotions.map(emo => {
+              const config = getEmotionConfig(emo);
+              const Icon = config.icon;
+              const stats = emotionStats[emo] || { pnl: 0, total: 0 };
+              const isProfitable = stats.pnl > 0;
+              const hasTrades = stats.total > 0;
+              
+              return (
+                <div key={emo} className={`border-l-2 ${config.borderColor} pl-3.5 py-0.5 flex flex-col justify-between min-h-[90px]`}>
+                  <div className={`flex items-center gap-1.5 ${config.textColor} mb-2`}>
+                    <Icon size={14} className="shrink-0 mt-0.5" />
+                    <span className="text-[10px] font-bold tracking-wider uppercase">{config.label}</span>
+                  </div>
+                  <div>
+                    <div className={`text-lg font-bold mb-0.5 ${stats.pnl > 0 ? "text-emerald-600" : stats.pnl < 0 ? "text-red-650" : "text-slate-700"}`}>
+                      {hasTrades ? `${isProfitable ? "+" : ""}$${stats.pnl.toFixed(2)}` : "$0.00"}
+                    </div>
+                    <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                      {stats.total} {stats.total === 1 ? "trade" : "trades"}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-[10px] text-slate-400">{emotionStats["Confident"]?.total || 0} trades - Flow State</div>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-md p-5 flex flex-col justify-between">
-              <div className="flex items-center gap-2 text-slate-400 mb-4">
-                <MinusCircle size={16} />
-                <span className="text-xs font-bold text-slate-600">Neutral</span>
-              </div>
-              <div>
-                <div className={`text-xl font-bold mb-1 ${emotionStats["Neutral"]?.pnl >= 0 ? 'text-emerald-650' : 'text-red-600'}`}>
-                  {emotionStats["Neutral"] ? (emotionStats["Neutral"].pnl >= 0 ? '+' : '') + '$' + emotionStats["Neutral"].pnl.toFixed(2) : '$0.00'}
-                </div>
-                <div className="text-[10px] text-slate-400">{emotionStats["Neutral"]?.total || 0} trades - Neutral</div>
-              </div>
-            </div>
-
-            <div className="bg-red-50 border border-red-200 rounded-md p-5 flex flex-col justify-between">
-              <div className="flex items-center gap-2 text-red-605 mb-4">
-                <Flame size={16} className="text-red-500" />
-                <span className="text-xs font-bold text-red-700">Greedy</span>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-red-750 mb-1">
-                  {emotionStats["Greedy"] ? (emotionStats["Greedy"].pnl >= 0 ? '+' : '') + '$' + emotionStats["Greedy"].pnl.toFixed(2) : '$0.00'}
-                </div>
-                <div className="text-[10px] text-slate-400">{emotionStats["Greedy"]?.total || 0} trades - Greed</div>
-              </div>
-            </div>
-
+              );
+            })}
           </div>
         </div>
 

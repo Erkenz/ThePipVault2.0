@@ -35,5 +35,21 @@ export default async function AnalyticsPage() {
 
   const typedTrades = (trades || []) as Trade[];
 
-  return <AnalyticsClient trades={typedTrades} />;
+  // Fetch user profile settings for sessions and strategies
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("strategies, sessions")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const userProfile = {
+    strategies: profile?.strategies && profile.strategies.length > 0 
+      ? profile.strategies 
+      : ["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"],
+    sessions: profile?.sessions && profile.sessions.length > 0 
+      ? profile.sessions 
+      : ["London", "New York", "Tokyo", "Sydney"],
+  };
+
+  return <AnalyticsClient trades={typedTrades} userProfile={userProfile} />;
 }
