@@ -21,7 +21,14 @@ export default async function MainLayout({
     .eq("user_id", user.id)
     .order("name", { ascending: true });
 
-  // 3. Read selection cookie
+  // 3. Fetch user profile for role & group membership
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, group_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  // 4. Read selection cookie
   const cookieStore = await cookies();
   const selectedAccountId = cookieStore.get("selected_account_id")?.value || "overall";
 
@@ -29,7 +36,9 @@ export default async function MainLayout({
     <div className="flex min-h-screen w-full">
       <Sidebar 
         initialAccounts={accounts || []} 
-        selectedAccountId={selectedAccountId} 
+        selectedAccountId={selectedAccountId}
+        userRole={profile?.role || "user"}
+        hasGroup={Boolean(profile?.group_id)}
       />
       <main className="flex-1 transition-[margin] duration-300 ml-[64px] md:ml-[240px] min-w-0 flex flex-col">
         {children}

@@ -10,15 +10,15 @@ describe('HomePage', () => {
     const heading = screen.getByRole('heading', { level: 1 });
     
     expect(heading).toBeInTheDocument();
-    expect(heading).toHaveTextContent(/The Pip Vault/i);
+    expect(heading).toHaveTextContent(/Trading Success. Systematized./i);
   });
 
   it('renders the call to action button', () => {
     render(<HomePage />);
     
-    const link = screen.getByRole('link', { name: /Enter The Vault/i });
+    const link = screen.getByRole('link', { name: /Start journaling free/i });
     
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/dashboard');
+    expect(link).toHaveAttribute('href', '/register');
   });
 });

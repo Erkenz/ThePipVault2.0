@@ -4,7 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, BookOpen, BarChart2, Settings, Plus, ChevronLeft, ChevronRight, LogOut, Wallet } from "lucide-react";
+import { LayoutDashboard, BookOpen, BarChart2, Settings, Plus, ChevronLeft, ChevronRight, LogOut, Wallet, Users, ShieldCheck } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
 import CustomSelect from "@/components/journal/CustomSelect";
 
@@ -15,19 +15,31 @@ interface SidebarProps {
     currency: string;
   }[];
   selectedAccountId: string;
+  userRole?: string;
+  hasGroup?: boolean;
 }
 
-export function Sidebar({ initialAccounts, selectedAccountId }: SidebarProps) {
+export function Sidebar({ 
+  initialAccounts, 
+  selectedAccountId,
+  userRole = "user",
+  hasGroup = false 
+}: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+  const isAdmin = userRole === "admin";
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Journal", href: "/journal", icon: BookOpen },
     { name: "Analytics", href: "/analytics", icon: BarChart2 },
     { name: "Accounts", href: "/accounts", icon: Wallet },
+    // Beta 1.0: Group page hidden for all users (will return in later update)
+    // ...(canSeeGroups ? [{ name: "Group", href: "/group", icon: Users }] : []),
     { name: "Settings", href: "/settings", icon: Settings },
+    ...(isAdmin ? [{ name: "Admin", href: "/admin", icon: ShieldCheck, badge: "Admin" }] : []),
   ];
 
   const handleLogout = async () => {
@@ -99,19 +111,33 @@ export function Sidebar({ initialAccounts, selectedAccountId }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-2.5 py-3">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.href === "/dashboard" 
+            ? pathname === "/dashboard" 
+            : pathname.startsWith(item.href);
+          const isAdminItem = item.href === "/admin";
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 border transition-all ${
+              className={`group flex items-center justify-between rounded-md px-2.5 py-2 border transition-all ${
                 isActive 
-                  ? "bg-zinc-900 border-zinc-800 text-white font-medium shadow-sm" 
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border-transparent"
+                  ? isAdminItem
+                    ? "bg-purple-950/40 border-purple-800/60 text-purple-200 font-medium shadow-sm"
+                    : "bg-zinc-900 border-zinc-800 text-white font-medium shadow-sm" 
+                  : isAdminItem
+                    ? "text-purple-400/80 hover:text-purple-200 hover:bg-purple-950/20 border-transparent"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border-transparent"
               }`}
             >
-              <item.icon size={16} className={isActive ? "text-white" : "text-zinc-500 group-hover:text-zinc-350"} />
-              {!isCollapsed && <span className="text-xs font-medium">{item.name}</span>}
+              <div className="flex items-center gap-2.5">
+                <item.icon size={16} className={isActive ? (isAdminItem ? "text-purple-300" : "text-white") : (isAdminItem ? "text-purple-400" : "text-zinc-500 group-hover:text-zinc-350")} />
+                {!isCollapsed && <span className="text-xs font-medium">{item.name}</span>}
+              </div>
+              {!isCollapsed && "badge" in item && item.badge && (
+                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 text-purple-300">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           );
         })}
