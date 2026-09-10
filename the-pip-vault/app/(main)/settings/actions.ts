@@ -94,7 +94,7 @@ export async function resetProfileSettings() {
   return { success: true };
 }
 
-import { createClient as createJSClient } from '@supabase/supabase-js';
+import { deleteUserCascade } from '@/utils/supabase/admin';
 
 export async function deleteAccountAction() {
   const supabase = await createClient();
@@ -105,41 +105,13 @@ export async function deleteAccountAction() {
     return { error: 'You must be logged in to delete your account.' };
   }
 
-  // 1. Delete user's trades (manual wipe for extra safety)
-  const { error: tradesDeleteError } = await supabase
-    .from('trades')
-    .delete()
-    .eq('user_id', user.id);
-
-  if (tradesDeleteError) {
-    console.error("Supabase Trades Delete Error during account deletion:", tradesDeleteError);
-    return { error: `Failed to delete trades: ${tradesDeleteError.message}` };
+  // Delete user and all dependent records across all tables
+  const result = await deleteUserCascade(user.id);
+  if (!result.success) {
+    return { error: result.error || 'Failed to delete account. Please try again.' };
   }
 
-  // 2. Delete user's profile
-  const { error: profileDeleteError } = await supabase
-    .from('profiles')
-    .delete()
-    .eq('id', user.id);
-
-  if (profileDeleteError) {
-    console.error("Supabase Profile Delete Error during account deletion:", profileDeleteError);
-    return { error: `Failed to delete profile: ${profileDeleteError.message}` };
-  }
-
-  // 3. Create admin client to delete auth user using SERVICE_KEY
-  const adminClient = createJSClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SERVICE_KEY!
-  );
-
-  const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(user.id);
-  if (authDeleteError) {
-    console.error("Supabase Auth Delete Error during account deletion:", authDeleteError);
-    return { error: `Failed to delete account: ${authDeleteError.message}` };
-  }
-
-  // 4. Sign out
+  // Sign out
   await supabase.auth.signOut();
 
   // Revalidate relevant pages
@@ -149,3 +121,4 @@ export async function deleteAccountAction() {
 
   return { success: true };
 }
+

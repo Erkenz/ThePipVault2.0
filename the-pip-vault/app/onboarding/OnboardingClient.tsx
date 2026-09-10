@@ -146,8 +146,7 @@ export default function OnboardingClient({ initialData }: OnboardingClientProps)
         setIsSubmitting(false);
       } else {
         toast.success(`Welcome to The Pip Vault, ${firstName}! Your account is ready.`);
-        router.push('/dashboard');
-        router.refresh();
+        window.location.href = '/dashboard';
       }
     } catch {
       toast.error('Failed to complete setup. Please try again.');
