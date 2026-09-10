@@ -21,12 +21,17 @@ export default async function MainLayout({
     .eq("user_id", user.id)
     .order("name", { ascending: true });
 
-  // 3. Fetch user profile for role & group membership
+  // 3. Fetch user profile for role, group membership, and onboarding status
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, group_id")
+    .select("role, group_id, first_name, last_name, currency")
     .eq("id", user.id)
     .maybeSingle();
+
+  // If user has not completed onboarding, redirect them to the onboarding flow
+  if (!profile?.first_name || !profile?.last_name || !profile?.currency) {
+    redirect("/onboarding");
+  }
 
   // 4. Read selection cookie
   const cookieStore = await cookies();

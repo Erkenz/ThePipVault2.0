@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { registerAction } from './actions';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 
@@ -11,6 +11,8 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -39,13 +41,52 @@ export default function RegisterPage() {
   async function onSubmit(formData: FormData) {
     setIsLoading(true);
     setErrorMessage(null);
-    
-    const result = await registerAction(formData);
-    
-    if (result?.error) {
-      setErrorMessage(result.error);
+    try {
+      const result = await registerAction(formData);
+      
+      if (result?.error) {
+        setErrorMessage(result.error);
+        setIsLoading(false);
+      } else if (result?.needsConfirmation) {
+        setSubmittedEmail(result.email || (formData.get('email') as string) || '');
+        setNeedsConfirmation(true);
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
+  }
+
+  if (needsConfirmation) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-slate-50">
+        <div className="w-full max-w-[420px] bg-white border border-slate-200/80 rounded-md p-7 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.05),0_10px_20px_rgba(0,0,0,0.015)] text-center space-y-4">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+            <Mail size={22} />
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            Check your email
+          </h1>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            We sent a verification link to <strong className="text-slate-800">{submittedEmail}</strong>. Please click the link in the email to activate your account.
+          </p>
+          <div className="p-3 bg-slate-50 rounded-md border border-slate-200 text-[11px] text-slate-500 text-left space-y-1">
+            <div className="font-semibold text-slate-700">Didn't receive the email?</div>
+            <div>• Check your spam or junk folder.</div>
+            <div>• It can sometimes take a minute or two to arrive.</div>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/login"
+              className="inline-flex w-full items-center justify-center rounded-md bg-zinc-950 hover:bg-zinc-800 py-2.5 text-xs font-semibold text-white uppercase tracking-wider transition-colors"
+            >
+              Back to Sign in
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
