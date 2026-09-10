@@ -144,7 +144,7 @@
 
             <!-- CTA Button -->
             <div class="btn-container">
-              <a href="{{ .ConfirmationURL }}" class="btn" target="_blank">
+              <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email" class="btn" target="_blank">
                 Confirm Email Address
               </a>
             </div>
@@ -155,8 +155,8 @@
             <p class="fallback-text">
               If the button above doesn't work, copy and paste this URL into your web browser:
             </p>
-            <a href="{{ .ConfirmationURL }}" class="fallback-url" target="_blank">
-              {{ .ConfirmationURL }}
+            <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email" class="fallback-url" target="_blank">
+              {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email
             </a>
 
             <!-- Security Note -->
