@@ -14,43 +14,38 @@
   --color-profit: #22c55e;
   --color-loss: #ff4560;
   --color-gold: #fbbf24;
+
+  --color-red-650: #e11d48;
+  --color-red-250: #fecdd3;
+  --color-emerald-650: #059669;
+  --color-emerald-250: #a7f3d0;
 }
 
 @layer base {
   :root {
-    /* Premium Light Mode */
-    --background: #f4f7f9; 
+    /* Enterprise Light Workspace */
+    --background: #f8fafc; 
     --foreground: #0f172a; 
     --card: #ffffff; 
     --card-foreground: #0f172a;
-    --primary: #2563EB;
+    --primary: #2563eb;
     --secondary: #f1f5f9;
-    --muted: #f8fafc;
+    --muted: #f1f5f9;
     --muted-foreground: #64748b; 
     --border: #e2e8f0;
-    
-    /* Light Mode Glass */
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.8);
-    --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
   }
 
   .dark {
-    /* Premium Dark Mode */
-    --background: #0b0e14;
-    --foreground: #e2e8f0;
-    --card: #151a23;
-    --card-foreground: #e2e8f0;
-    --primary: #2563EB;
-    --secondary: #2a303c;
-    --muted: #1e2532;
-    --muted-foreground: #94a3b8;
-    --border: #272e3b;
-    
-    /* Dark Mode Glass */
-    --glass-bg: rgba(21, 26, 35, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
+    /* Prevent dark mode background overrides */
+    --background: #f8fafc; 
+    --foreground: #0f172a; 
+    --card: #ffffff; 
+    --card-foreground: #0f172a;
+    --primary: #2563eb;
+    --secondary: #f1f5f9;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b; 
+    --border: #e2e8f0;
   }
 
   body {
@@ -59,15 +54,17 @@
 }
 
 @layer utilities {
-  /* Doordat we var() gebruiken, wisselt het glas nu ALTIJD correct mee */
   .glass {
-    background-color: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
+    @apply bg-white border border-slate-200 shadow-sm;
   }
-  
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary via-violet-500 to-fuchsia-500;
-  }
+}
+
+/* Autofill background overrides to keep input background pure white */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
