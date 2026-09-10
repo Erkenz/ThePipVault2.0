@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
+import { getAdminClient } from '@/utils/supabase/admin';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -53,6 +54,26 @@ export async function registerAction(formData: FormData) {
         };
       }
       return { error: error.message && error.message !== '{}' ? error.message : 'Registration failed. Please check your credentials and try again.' };
+    }
+
+    // Preemptively ensure a profile record exists in public.profiles
+    if (data?.user) {
+      try {
+        const adminClient = getAdminClient();
+        await adminClient.from('profiles').upsert({
+          id: data.user.id,
+          first_name: null,
+          last_name: null,
+          role: 'user',
+          currency: null,
+          starting_equity: 10000,
+          strategies: ["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"],
+          sessions: ["London", "New York", "Tokyo", "Sydney"],
+          asset_class: 'forex',
+        }, { onConflict: 'id' });
+      } catch (profileErr) {
+        console.warn('Preemptive profile creation notice:', profileErr);
+      }
     }
 
     // If email confirmation is enabled in Supabase, data.session is null until verified.

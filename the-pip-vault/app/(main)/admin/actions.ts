@@ -1,6 +1,6 @@
 'use server';
 
-import { verifyAdminUser } from '@/utils/supabase/admin';
+import { verifyAdminUser, deleteUserCascade } from '@/utils/supabase/admin';
 import { revalidatePath } from 'next/cache';
 
 export async function updateUserRoleAction(targetUserId: string, newRole: string) {
@@ -174,35 +174,12 @@ export async function deleteUserAccountAdminAction(targetUserId: string) {
     return { error: 'You cannot delete your own admin account from this panel.' };
   }
 
-  try {
-    // 1. Wipe user trades
-    await auth.adminClient.from('trades').delete().eq('user_id', targetUserId);
-
-    // 2. Wipe user submissions
-    await auth.adminClient.from('homework_submissions').delete().eq('student_id', targetUserId);
-
-    // 3. Wipe user notifications
-    try {
-      await auth.adminClient.from('notifications').delete().eq('user_id', targetUserId);
-    } catch {
-      // ignore if table doesn't exist
-    }
-
-    // 4. Wipe user accounts
-    await auth.adminClient.from('accounts').delete().eq('user_id', targetUserId);
-
-    // 5. Delete profile
-    await auth.adminClient.from('profiles').delete().eq('id', targetUserId);
-
-    // 6. Delete auth user
-    const { error: authDeleteError } = await auth.adminClient.auth.admin.deleteUser(targetUserId);
-    if (authDeleteError) {
-      return { error: `Failed to remove auth account: ${authDeleteError.message}` };
-    }
-
-    revalidatePath('/admin');
-    return { success: true };
-  } catch (err: any) {
-    return { error: `Failed to delete user: ${err?.message || 'Unknown error'}` };
+  const result = await deleteUserCascade(targetUserId);
+  if (!result.success) {
+    return { error: result.error || 'Failed to delete user.' };
   }
+
+  revalidatePath('/admin');
+  return { success: true };
 }
+

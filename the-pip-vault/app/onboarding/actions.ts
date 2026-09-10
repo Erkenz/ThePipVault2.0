@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
+import { getAdminClient } from '@/utils/supabase/admin';
 import { revalidatePath } from 'next/cache';
 
 export interface OnboardingInput {
@@ -41,49 +42,51 @@ export async function completeOnboardingAction(input: OnboardingInput) {
     return { error: 'Last name is required.' };
   }
 
-  // 1. Update user profile
+  // 1. Fetch existing profile to preserve any existing role, group_id, etc.
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('role, group_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const profilePayload = {
+    id: user.id,
+    first_name: firstName,
+    last_name: lastName,
+    currency: currency,
+    starting_equity: startingEquity,
+    asset_class: assetClass,
+    strategies: strategies,
+    sessions: sessions,
+    role: existingProfile?.role || 'user',
+    group_id: existingProfile?.group_id || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  // 2. Upsert profile so it succeeds whether the row already exists or not
   const { error: profileError } = await supabase
     .from('profiles')
-    .update({
-      first_name: firstName,
-      last_name: lastName,
-      currency: currency,
-      starting_equity: startingEquity,
-      asset_class: assetClass,
-      strategies: strategies,
-      sessions: sessions,
-    })
-    .eq('id', user.id);
+    .upsert(profilePayload, { onConflict: 'id' });
 
   if (profileError) {
-    console.error('Onboarding profile update error:', profileError);
-    return { error: `Failed to save profile: ${profileError.message}` };
-  }
+    console.error('Onboarding profile upsert error with user client:', profileError);
+    // Fallback to admin client if RLS blocked user client upsert
+    try {
+      const adminClient = getAdminClient();
+      const { error: adminProfileError } = await adminClient
+        .from('profiles')
+        .upsert(profilePayload, { onConflict: 'id' });
 
-  // 2. Check if user already has an account, if not create their primary account
-  const { data: existingAccounts } = await supabase
-    .from('accounts')
-    .select('id')
-    .eq('user_id', user.id);
-
-  if (!existingAccounts || existingAccounts.length === 0) {
-    const { error: accountError } = await supabase
-      .from('accounts')
-      .insert({
-        user_id: user.id,
-        name: 'Main Trading Account',
-        type: assetClass.toLowerCase() === 'futures' ? 'Futures' : 'Forex',
-        start_amount: startingEquity,
-        currency: currency,
-        status: 'Active',
-        is_default: true,
-      });
-
-    if (accountError) {
-      console.warn('Initial account creation notice:', accountError.message);
+      if (adminProfileError) {
+        console.error('Onboarding profile upsert error with admin client:', adminProfileError);
+        return { error: `Failed to save profile: ${adminProfileError.message}` };
+      }
+    } catch (adminErr: any) {
+      return { error: `Failed to save profile: ${profileError.message}` };
     }
   }
 
+  revalidatePath('/onboarding');
   revalidatePath('/dashboard');
   revalidatePath('/accounts');
   revalidatePath('/settings');

@@ -32,7 +32,28 @@ export async function loginAction(formData: FormData) {
       .eq('id', user.id)
       .maybeSingle();
 
-    if (!profile?.first_name || !profile?.last_name || !profile?.currency) {
+    if (!profile) {
+      const rawName = (user.user_metadata?.full_name || user.user_metadata?.name || '') as string;
+      const nameParts = rawName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        first_name: firstName || null,
+        last_name: lastName || null,
+        role: 'user',
+        currency: null,
+        starting_equity: 10000,
+        strategies: ["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"],
+        sessions: ["London", "New York", "Tokyo", "Sydney"],
+        asset_class: 'forex',
+      }, { onConflict: 'id' });
+
+      redirect('/onboarding');
+    }
+
+    if (!profile.first_name || !profile.last_name || !profile.currency) {
       redirect('/onboarding');
     }
   }
