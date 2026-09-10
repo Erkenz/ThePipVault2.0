@@ -23,7 +23,21 @@ export async function loginAction(formData: FormData) {
     return { error: 'Invalid authentication credentials. Please try again.' };
   }
 
-  // Succes! Stuur de gebruiker naar binnen
+  // Check if user has completed onboarding
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, currency')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!profile?.first_name || !profile?.last_name || !profile?.currency) {
+      redirect('/onboarding');
+    }
+  }
+
+  // Success! Redirect to dashboard
   redirect('/dashboard');
 }
 

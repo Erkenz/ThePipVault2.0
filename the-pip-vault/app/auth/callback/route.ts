@@ -13,25 +13,26 @@ export async function GET(request: Request) {
     if (!exchangeError) {
       // 1. Get authenticated user
       const { data: { user } } = await supabase.auth.getUser();
+      let destination = next;
 
       if (user) {
-        // 2. Ensure profile exists in public.profiles table
+        // 2. Fetch profile from public.profiles table
         const { data: existingProfile } = await supabase
           .from('profiles')
-          .select('id')
+          .select('*')
           .eq('id', user.id)
           .maybeSingle();
 
         if (!existingProfile) {
           const rawName = (user.user_metadata?.full_name || user.user_metadata?.name || '') as string;
           const nameParts = rawName.trim().split(' ');
-          const firstName = nameParts[0] || user.email?.split('@')[0] || '';
+          const firstName = nameParts[0] || '';
           const lastName = nameParts.slice(1).join(' ') || '';
 
           await supabase.from('profiles').insert({
             id: user.id,
-            first_name: firstName,
-            last_name: lastName,
+            first_name: firstName || null,
+            last_name: lastName || null,
             role: 'user',
             currency: 'USD',
             starting_equity: 0,
@@ -39,6 +40,10 @@ export async function GET(request: Request) {
             sessions: ["London", "New York", "Tokyo", "Sydney"],
             asset_class: 'forex',
           });
+
+          destination = '/onboarding';
+        } else if (!existingProfile.first_name || !existingProfile.last_name || !existingProfile.currency) {
+          destination = '/onboarding';
         }
       }
 
@@ -46,15 +51,15 @@ export async function GET(request: Request) {
       const isLocalEnv = process.env.NODE_ENV === 'development';
 
       if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
+        return NextResponse.redirect(`${origin}${destination}`);
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+        return NextResponse.redirect(`https://${forwardedHost}${destination}`);
       } else {
-        return NextResponse.redirect(`${origin}${next}`);
+        return NextResponse.redirect(`${origin}${destination}`);
       }
     }
   }
 
   // If code exchange failed, redirect back to login with error message
-  return NextResponse.redirect(`${origin}/login?error=Google authentication failed`);
+  return NextResponse.redirect(`${origin}/login?error=Authentication failed. Please try again.`);
 }
