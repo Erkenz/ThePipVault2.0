@@ -6,6 +6,7 @@ import { registerAction } from './actions';
 import { Loader2, AlertCircle, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
+import { CaptchaWidget } from '@/components/auth/CaptchaWidget';
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,6 +15,10 @@ export default function RegisterPage() {
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
   
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaKey, setCaptchaKey] = useState(0);
+  const [renderTime] = useState(() => Date.now());
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -46,6 +51,8 @@ export default function RegisterPage() {
       
       if (result?.error) {
         setErrorMessage(result.error);
+        setCaptchaAnswer('');
+        setCaptchaKey((k) => k + 1); // refresh captcha on error
         setIsLoading(false);
       } else if (result?.needsConfirmation) {
         setSubmittedEmail(result.email || (formData.get('email') as string) || '');
@@ -54,6 +61,8 @@ export default function RegisterPage() {
       }
     } catch (err: any) {
       setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.');
+      setCaptchaAnswer('');
+      setCaptchaKey((k) => k + 1);
       setIsLoading(false);
     }
   }
@@ -164,6 +173,23 @@ export default function RegisterPage() {
 
         <form action={onSubmit} className="space-y-4">
           
+          {/* Invisible Honeypot Field */}
+          <div className="opacity-0 absolute -left-[9999px] top-0 pointer-events-none h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+            <label htmlFor="website_hp">Leave this field empty</label>
+            <input 
+              id="website_hp" 
+              name="website_hp" 
+              type="text" 
+              tabIndex={-1} 
+              autoComplete="off" 
+            />
+            <input 
+              type="hidden" 
+              name="formRenderTime" 
+              value={renderTime} 
+            />
+          </div>
+
           {/* Email */}
           <div className="space-y-1.5">
             <label htmlFor="email" className="block text-xs font-semibold text-slate-500">
@@ -229,6 +255,14 @@ export default function RegisterPage() {
               </button>
             </div>
           </div>
+
+          {/* Captcha Security Challenge */}
+          <CaptchaWidget
+            key={captchaKey}
+            value={captchaAnswer}
+            onChange={setCaptchaAnswer}
+            disabled={isLoading}
+          />
 
           {/* Submit button */}
           <button 

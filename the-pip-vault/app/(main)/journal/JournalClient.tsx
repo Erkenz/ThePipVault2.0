@@ -1,9 +1,9 @@
 // src/app/(main)/journal/JournalClient.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Trade } from "@/types/database";
-import { Filter, Calendar, ChevronDown, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Target, Crosshair, Maximize2, Plus, XCircle, ImageOff } from "lucide-react";
+import { Filter, Calendar, ChevronDown, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Target, Crosshair, Maximize2, Plus, XCircle, ImageOff, Check } from "lucide-react";
 import { AddTradeModal } from "@/components/journal/AddTradeModal";
 import { DeleteTradeModal } from "@/components/journal/DeleteTradeModal";
 import { EditTradeModal } from "@/components/journal/EditTradeModal";
@@ -22,28 +22,129 @@ export default function JournalClient({
   accounts?: any[];
 }) {
   const [searchPair, setSearchPair] = useState("");
-  const [filterType, setFilterType] = useState<"ALL" | "WIN" | "LOSS">("ALL");
+  const [filterType, setFilterType] = useState<"ALL" | "WIN" | "LOSS" | "BE">("ALL");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [selectedSession, setSelectedSession] = useState("ALL");
+  const [selectedStrategy, setSelectedStrategy] = useState("ALL");
+  const [selectedDirection, setSelectedDirection] = useState<"ALL" | "LONG" | "SHORT">("ALL");
+
+  const [isSessionOpen, setIsSessionOpen] = useState(false);
+  const [isStrategyOpen, setIsStrategyOpen] = useState(false);
+  const sessionDropdownRef = useRef<HTMLDivElement>(null);
+  const strategyDropdownRef = useRef<HTMLDivElement>(null);
+
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [tradeToEdit, setTradeToEdit] = useState<Trade | null>(null);
   const [tradeToDelete, setTradeToDelete] = useState<Trade | null>(null); 
 
-  // Basis Filter Logica
-  const filteredTrades = initialTrades.filter((trade) => {
-    const matchesPair = trade.pair?.toLowerCase().includes(searchPair.toLowerCase()) ?? false;
-    const matchesType = 
-      filterType === "ALL" ? true : 
-      filterType === "WIN" ? (trade.pnl > 0 && !trade.is_breakeven) : 
-      (trade.pnl <= 0 && !trade.is_breakeven);
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sessionDropdownRef.current && !sessionDropdownRef.current.contains(event.target as Node)) {
+        setIsSessionOpen(false);
+      }
+      if (strategyDropdownRef.current && !strategyDropdownRef.current.contains(event.target as Node)) {
+        setIsStrategyOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    return matchesPair && matchesType;
-  });
+  // Available sessions and strategies
+  const availableSessions = useMemo(() => {
+    const set = new Set<string>();
+    (userProfile?.sessions || []).forEach(s => s && set.add(s));
+    initialTrades.forEach(t => t.session && set.add(t.session));
+    return Array.from(set);
+  }, [userProfile?.sessions, initialTrades]);
 
-  const hasActiveFilters = searchPair !== "" || filterType !== "ALL";
+  const availableStrategies = useMemo(() => {
+    const set = new Set<string>();
+    (userProfile?.strategies || []).forEach(s => s && set.add(s));
+    initialTrades.forEach(t => t.setup && set.add(t.setup));
+    return Array.from(set);
+  }, [userProfile?.strategies, initialTrades]);
+
+  // Complete Filter Logic
+  const filteredTrades = useMemo(() => {
+    return initialTrades.filter((trade) => {
+      // 1. Search (matches pair, setup, or notes)
+      if (searchPair.trim()) {
+        const q = searchPair.toLowerCase().trim();
+        const matchPair = trade.pair?.toLowerCase().includes(q);
+        const matchSetup = trade.setup?.toLowerCase().includes(q);
+        const matchComment = trade.trade_comment?.toLowerCase().includes(q);
+        if (!matchPair && !matchSetup && !matchComment) return false;
+      }
+
+      // 2. Outcome Type
+      if (filterType === "WIN") {
+        if (trade.pnl <= 0 || trade.is_breakeven) return false;
+      } else if (filterType === "LOSS") {
+        if (trade.pnl > 0 || trade.is_breakeven) return false;
+      } else if (filterType === "BE") {
+        if (!trade.is_breakeven) return false;
+      }
+
+      // 3. Date Range (inclusive of local days)
+      if (startDate) {
+        const tradeTime = new Date(trade.date).getTime();
+        const [sy, sm, sd] = startDate.split("-").map(Number);
+        const startTime = new Date(sy, sm - 1, sd, 0, 0, 0, 0).getTime();
+        if (isNaN(tradeTime) || tradeTime < startTime) return false;
+      }
+      if (endDate) {
+        const tradeTime = new Date(trade.date).getTime();
+        const [ey, em, ed] = endDate.split("-").map(Number);
+        const endTime = new Date(ey, em - 1, ed, 23, 59, 59, 999).getTime();
+        if (isNaN(tradeTime) || tradeTime > endTime) return false;
+      }
+
+      // 4. Session
+      if (selectedSession !== "ALL") {
+        if (!trade.session || trade.session.toLowerCase() !== selectedSession.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 5. Strategy
+      if (selectedStrategy !== "ALL") {
+        if (!trade.setup || trade.setup.toLowerCase() !== selectedStrategy.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 6. Direction
+      if (selectedDirection !== "ALL") {
+        if (trade.direction !== selectedDirection) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [initialTrades, searchPair, filterType, startDate, endDate, selectedSession, selectedStrategy, selectedDirection]);
+
+  const hasActiveFilters = 
+    searchPair.trim() !== "" || 
+    filterType !== "ALL" || 
+    startDate !== "" || 
+    endDate !== "" || 
+    selectedSession !== "ALL" || 
+    selectedStrategy !== "ALL" || 
+    selectedDirection !== "ALL";
 
   const clearFilters = () => {
     setSearchPair("");
     setFilterType("ALL");
+    setStartDate("");
+    setEndDate("");
+    setSelectedSession("ALL");
+    setSelectedStrategy("ALL");
+    setSelectedDirection("ALL");
   };
 
   return (
@@ -80,75 +181,227 @@ export default function JournalClient({
         {/* New Trade Button */}
         <button 
           onClick={() => setIsAddModalOpen(true)} 
-          className="flex items-center gap-1.5 rounded-md bg-zinc-950 hover:bg-zinc-900 text-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wider shadow-sm transition-all"
+          className="flex items-center gap-1.5 rounded-md bg-zinc-950 hover:bg-zinc-900 text-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
         >
           <Plus size={14} />
           <span>New Trade</span>
         </button>
       </div>
 
-      {/* --- Filter & Search Bar (Vercel Style) --- */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-zinc-200 rounded-md p-3 shadow-sm">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 text-zinc-400 pr-3 border-r border-zinc-200">
-            <Filter size={14} />
-            <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500">Filters</span>
-          </div>
+      {/* --- Filter & Search Bar --- */}
+      <div className="flex flex-col gap-3 bg-white border border-zinc-200 rounded-md p-3 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-1.5 text-zinc-400 pr-2 border-r border-zinc-200">
+              <Filter size={14} />
+              <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500">Filters</span>
+            </div>
 
-          <div className="flex bg-zinc-100 rounded-md p-0.5 border border-zinc-200">
-            {(["ALL", "WIN", "LOSS"] as const).map((type) => {
-              const isActive = filterType === type;
-              const activeColor = 
-                type === "WIN" ? "text-emerald-700 bg-white shadow-sm font-semibold" : 
-                type === "LOSS" ? "text-red-700 bg-white shadow-sm font-semibold" : 
-                "text-zinc-900 bg-white shadow-sm font-semibold";
-              return (
+            {/* Outcome Filter */}
+            <div className="flex bg-zinc-100 rounded-md p-0.5 border border-zinc-200">
+              {(["ALL", "WIN", "LOSS", "BE"] as const).map((type) => {
+                const isActive = filterType === type;
+
+                const activeColor = 
+                  type === "WIN" ? "text-emerald-700 bg-white shadow-sm font-semibold" : 
+                  type === "LOSS" ? "text-red-700 bg-white shadow-sm font-semibold" : 
+                  type === "BE" ? "text-blue-700 bg-white shadow-sm font-semibold" :
+                  "text-zinc-900 bg-white shadow-sm font-semibold";
+
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setFilterType(type)}
+                    className={`px-2.5 py-1 text-xs rounded transition-all cursor-pointer font-medium ${
+                      isActive ? activeColor : "text-zinc-500 hover:text-zinc-900"
+                    }`}
+                  >
+                    <span>{type}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Date Range Inputs */}
+            <div className="flex items-center gap-1 bg-zinc-50 border border-zinc-200 px-2 py-1 rounded-md text-xs font-medium text-zinc-600 focus-within:bg-white focus-within:border-zinc-400 transition-all">
+              <Calendar size={13} className="text-zinc-400 shrink-0" />
+              <input 
+                type="date" 
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-transparent outline-none text-zinc-800 text-[11px] cursor-pointer" 
+                title="Filter from date"
+              />
+              <span className="text-zinc-300 text-[11px]">-</span>
+              <input 
+                type="date" 
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-transparent outline-none text-zinc-800 text-[11px] cursor-pointer" 
+                title="Filter to date"
+              />
+              {(startDate || endDate) && (
                 <button
-                  key={type}
-                  onClick={() => setFilterType(type)}
-                  className={`px-2.5 py-1 text-xs rounded transition-all cursor-pointer ${
-                    isActive ? activeColor : "text-zinc-500 hover:text-zinc-900"
-                  }`}
+                  type="button"
+                  onClick={() => { setStartDate(""); setEndDate(""); }}
+                  className="text-zinc-400 hover:text-zinc-700 p-0.5 rounded cursor-pointer ml-0.5"
+                  title="Clear date filter"
                 >
-                  {type}
+                  <XCircle size={12} />
                 </button>
-              );
-            })}
+              )}
+            </div>
+
+            {/* Session Dropdown Filter */}
+            <div className="relative" ref={sessionDropdownRef}>
+              <button 
+                type="button"
+                onClick={() => setIsSessionOpen(!isSessionOpen)}
+                className={`flex items-center gap-1.5 border px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                  selectedSession !== "ALL" 
+                    ? "bg-zinc-900 text-white border-zinc-900 shadow-sm" 
+                    : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"
+                }`}
+              >
+                <span className="text-[11px]">{selectedSession === "ALL" ? "All Sessions" : selectedSession}</span>
+                <ChevronDown size={13} className={`transition-transform duration-150 ${selectedSession !== "ALL" ? "text-zinc-300" : "text-zinc-400"} ${isSessionOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isSessionOpen && (
+                <div className="absolute top-[calc(100%+4px)] left-0 min-w-[140px] bg-white border border-zinc-200 rounded-md shadow-lg py-1 z-30 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedSession("ALL"); setIsSessionOpen(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-zinc-50 cursor-pointer flex items-center justify-between ${selectedSession === "ALL" ? "font-bold text-zinc-900 bg-zinc-50" : "text-zinc-600"}`}
+                  >
+                    <span>All Sessions</span>
+                    {selectedSession === "ALL" && <Check size={12} className="text-zinc-900" />}
+                  </button>
+                  {availableSessions.map((sess) => (
+                    <button
+                      key={sess}
+                      type="button"
+                      onClick={() => { setSelectedSession(sess); setIsSessionOpen(false); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-zinc-50 cursor-pointer flex items-center justify-between ${selectedSession === sess ? "font-bold text-zinc-900 bg-zinc-50" : "text-zinc-600"}`}
+                    >
+                      <span>{sess}</span>
+                      {selectedSession === sess && <Check size={12} className="text-zinc-900" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Strategy Dropdown Filter */}
+            <div className="relative" ref={strategyDropdownRef}>
+              <button 
+                type="button"
+                onClick={() => setIsStrategyOpen(!isStrategyOpen)}
+                className={`flex items-center gap-1.5 border px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                  selectedStrategy !== "ALL" 
+                    ? "bg-zinc-900 text-white border-zinc-900 shadow-sm" 
+                    : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"
+                }`}
+              >
+                <span className="text-[11px] max-w-[120px] truncate">{selectedStrategy === "ALL" ? "All Strategies" : selectedStrategy}</span>
+                <ChevronDown size={13} className={`transition-transform duration-150 ${selectedStrategy !== "ALL" ? "text-zinc-300" : "text-zinc-400"} ${isStrategyOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isStrategyOpen && (
+                <div className="absolute top-[calc(100%+4px)] left-0 min-w-[170px] max-h-60 overflow-y-auto bg-white border border-zinc-200 rounded-md shadow-lg py-1 z-30 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedStrategy("ALL"); setIsStrategyOpen(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-zinc-50 cursor-pointer flex items-center justify-between ${selectedStrategy === "ALL" ? "font-bold text-zinc-900 bg-zinc-50" : "text-zinc-600"}`}
+                  >
+                    <span>All Strategies</span>
+                    {selectedStrategy === "ALL" && <Check size={12} className="text-zinc-900" />}
+                  </button>
+                  {availableStrategies.map((strat) => (
+                    <button
+                      key={strat}
+                      type="button"
+                      onClick={() => { setSelectedStrategy(strat); setIsStrategyOpen(false); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-zinc-50 cursor-pointer flex items-center justify-between ${selectedStrategy === strat ? "font-bold text-zinc-900 bg-zinc-50" : "text-zinc-600"}`}
+                    >
+                      <span className="truncate">{strat}</span>
+                      {selectedStrategy === strat && <Check size={12} className="text-zinc-900 shrink-0 ml-1" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Direction Filter */}
+            <div className="flex bg-zinc-100 rounded-md p-0.5 border border-zinc-200">
+              {(["ALL", "LONG", "SHORT"] as const).map((dir) => {
+                const isActive = selectedDirection === dir;
+                const activeColor = 
+                  dir === "LONG" ? "text-emerald-700 bg-white shadow-sm font-semibold" : 
+                  dir === "SHORT" ? "text-red-700 bg-white shadow-sm font-semibold" : 
+                  "text-zinc-900 bg-white shadow-sm font-semibold";
+                return (
+                  <button
+                    key={dir}
+                    type="button"
+                    onClick={() => setSelectedDirection(dir)}
+                    className={`px-2 py-1 text-[11px] rounded transition-all cursor-pointer ${
+                      isActive ? activeColor : "text-zinc-500 hover:text-zinc-900"
+                    }`}
+                  >
+                    {dir === "ALL" ? "All Dir" : dir}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Date Inputs */}
-          <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-600">
-            <Calendar size={13} className="text-zinc-400" />
-            <input type="date" className="bg-transparent outline-none text-zinc-800 text-[11px]" />
-            <span className="text-zinc-400">-</span>
-            <input type="date" className="bg-transparent outline-none text-zinc-800 text-[11px]" />
+          {/* Search & Active Filters Bar */}
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+            {hasActiveFilters && (
+              <button 
+                type="button"
+                onClick={clearFilters} 
+                className="flex items-center gap-1 text-[11px] font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1 rounded-md transition-colors cursor-pointer shrink-0" 
+                title="Reset all filters"
+              >
+                <XCircle size={13} />
+                <span>Reset</span>
+              </button>
+            )}
+
+            <div className="relative w-full sm:w-56">
+              <input 
+                type="text"
+                placeholder="Search ticker, setup, notes..."
+                value={searchPair}
+                onChange={(e) => setSearchPair(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-md pl-2.5 pr-7 py-1 text-xs text-zinc-800 outline-none focus:bg-white focus:border-zinc-400 transition-all placeholder:text-zinc-400"
+              />
+              {searchPair && (
+                <button
+                  type="button"
+                  onClick={() => setSearchPair("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                  title="Clear search"
+                >
+                  <XCircle size={13} />
+                </button>
+              )}
+            </div>
           </div>
-
-          {/* Session Filter */}
-          <button className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-600 hover:text-zinc-800 hover:bg-zinc-100 transition-colors">
-            <span className="text-[11px]">All Sessions</span>
-            <ChevronDown size={13} className="text-zinc-400" />
-          </button>
-
-          {/* Clear Filters Button */}
-          {hasActiveFilters && (
-            <button 
-              onClick={clearFilters} 
-              className="text-zinc-400 hover:text-red-500 transition-colors ml-1" 
-              title="Clear Filters"
-            >
-              <XCircle size={16} />
-            </button>
-          )}
         </div>
 
-        <input 
-          type="text"
-          placeholder="Search Ticker..."
-          value={searchPair}
-          onChange={(e) => setSearchPair(e.target.value)}
-          className="bg-zinc-50 border border-zinc-200 rounded-md px-2.5 py-1 text-xs text-zinc-805 outline-none focus:bg-white focus:border-zinc-400 transition-all w-full sm:w-40 placeholder:text-zinc-400"
-        />
+        {/* Filter Result Summary */}
+        <div className="flex items-center justify-between text-[11px] text-zinc-500 border-t border-zinc-100 pt-2 px-0.5">
+          <div>
+            Showing <span className="font-bold text-zinc-900">{filteredTrades.length}</span> of {initialTrades.length} recorded executions
+          </div>
+          {hasActiveFilters && (
+            <div className="text-[10px] text-zinc-400 italic">
+              Filters active
+            </div>
+          )}
+        </div>
       </div>
 
       {/* --- Trades Ledger List (Clean SaaS Card Style) --- */}

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { X, TrendingUp, TrendingDown, Activity, Crosshair, Wallet, Loader2, Calculator, Calendar, ChevronDown } from "lucide-react";
 import { addTradeAction } from "@/app/(main)/journal/actions";
 import CustomSelect from "./CustomSelect";
@@ -27,6 +28,7 @@ export function AddTradeModal({
   };
   accounts?: Account[];
 }) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -168,6 +170,7 @@ export function AddTradeModal({
       setError(result.error);
       setIsLoading(false);
     } else {
+      router.refresh();
       onClose();
     }
   };

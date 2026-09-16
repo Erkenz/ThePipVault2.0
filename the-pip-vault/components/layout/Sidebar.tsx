@@ -7,25 +7,29 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, BookOpen, BarChart2, Settings, Plus, ChevronLeft, ChevronRight, LogOut, Wallet, Users, ShieldCheck } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
 import CustomSelect from "@/components/journal/CustomSelect";
+import { AddTradeModal } from "@/components/journal/AddTradeModal";
 
 interface SidebarProps {
-  initialAccounts: {
-    id: string;
-    name: string;
-    currency: string;
-  }[];
+  initialAccounts: any[];
   selectedAccountId: string;
   userRole?: string;
   hasGroup?: boolean;
+  userProfile?: {
+    default_asset_type: string;
+    strategies: string[];
+    sessions: string[];
+  };
 }
 
 export function Sidebar({ 
   initialAccounts, 
   selectedAccountId,
   userRole = "user",
-  hasGroup = false 
+  hasGroup = false,
+  userProfile
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -53,8 +57,9 @@ export function Sidebar({
   };
 
   return (
-    <aside 
-      className={`fixed top-0 left-0 h-screen z-40 flex flex-col bg-zinc-950 border-r border-zinc-900 transition-[width] duration-200 ${
+    <>
+      <aside 
+        className={`fixed top-0 left-0 h-screen z-40 flex flex-col bg-zinc-950 border-r border-zinc-900 transition-[width] duration-200 ${
         isCollapsed ? "w-[64px]" : "w-[240px]"
       }`}
     >
@@ -102,7 +107,11 @@ export function Sidebar({
 
       {/* Main Action */}
       <div className="p-3">
-        <button className="flex w-full items-center justify-center gap-1.5 rounded-md bg-white hover:bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 border border-zinc-200 shadow-sm transition-all uppercase tracking-wider">
+        <button 
+          onClick={() => setIsAddTradeModalOpen(true)}
+          title="New Trade"
+          className="flex w-full items-center justify-center gap-1.5 rounded-md bg-white hover:bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 border border-zinc-200 shadow-sm transition-all uppercase tracking-wider cursor-pointer"
+        >
           <Plus size={14} />
           {!isCollapsed && <span>New Trade</span>}
         </button>
@@ -164,5 +173,15 @@ export function Sidebar({
         </button>
       </div>
     </aside>
+
+    {/* Add Trade Modal */}
+    {isAddTradeModalOpen && (
+      <AddTradeModal 
+        onClose={() => setIsAddTradeModalOpen(false)} 
+        userProfile={userProfile} 
+        accounts={initialAccounts} 
+      />
+    )}
+  </>
   );
 }

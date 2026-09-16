@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { deleteTradeAction } from "@/app/(main)/journal/actions";
 
@@ -14,6 +15,7 @@ export function DeleteTradeModal({
   tradePair: string; 
   onClose: () => void; 
 }) {
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +29,7 @@ export function DeleteTradeModal({
       setError(result.error);
       setIsDeleting(false);
     } else {
+      router.refresh();
       onClose();
     }
   };
