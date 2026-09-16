@@ -24,7 +24,7 @@ export default async function MainLayout({
   // 3. Fetch user profile for role, group membership, and onboarding status
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, group_id, first_name, last_name, currency")
+    .select("role, group_id, first_name, last_name, currency, asset_class, strategies, sessions")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -32,6 +32,16 @@ export default async function MainLayout({
   if (!profile?.first_name || !profile?.last_name || !profile?.currency) {
     redirect("/onboarding");
   }
+
+  const userProfile = {
+    default_asset_type: profile?.asset_class || "forex",
+    strategies: profile?.strategies && profile.strategies.length > 0 
+      ? profile.strategies 
+      : ["Trend Continuation", "Reversal", "Breakout", "RSI Divergence"],
+    sessions: profile?.sessions && profile.sessions.length > 0 
+      ? profile.sessions 
+      : ["London", "New York", "Tokyo", "Sydney"],
+  };
 
   // 4. Read selection cookie
   const cookieStore = await cookies();
@@ -44,6 +54,7 @@ export default async function MainLayout({
         selectedAccountId={selectedAccountId}
         userRole={profile?.role || "user"}
         hasGroup={Boolean(profile?.group_id)}
+        userProfile={userProfile}
       />
       <main className="flex-1 transition-[margin] duration-300 ml-[64px] md:ml-[240px] min-w-0 flex flex-col">
         {children}

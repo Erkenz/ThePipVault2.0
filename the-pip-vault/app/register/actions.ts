@@ -4,9 +4,44 @@ import { createClient } from '@/utils/supabase/server';
 import { getAdminClient } from '@/utils/supabase/admin';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { generateCaptchaChallenge, verifyCaptchaAnswer, verifyCloudflareTurnstile } from '@/utils/captcha';
+
+export async function getCaptchaChallengeAction() {
+  return generateCaptchaChallenge();
+}
 
 export async function registerAction(formData: FormData) {
   try {
+    // 1. Honeypot check: Bots automatically fill out all inputs
+    const honeypot = formData.get('website_hp') as string;
+    if (honeypot && honeypot.trim() !== '') {
+      console.warn('Bot registration blocked via honeypot field');
+      return { error: 'Automated registration attempt blocked.' };
+    }
+
+    // 2. Submission timing check: Bots submit forms in milliseconds
+    const formRenderTime = Number(formData.get('formRenderTime') || 0);
+    if (formRenderTime > 0 && Date.now() - formRenderTime < 1500) {
+      return { error: 'Submission received too fast. Please take a moment to review and verify.' };
+    }
+
+    // 3. Captcha verification
+    const captchaToken = formData.get('captchaToken') as string;
+    const captchaAnswer = formData.get('captchaAnswer') as string;
+    const turnstileToken = formData.get('cf-turnstile-response') as string;
+
+    if (process.env.TURNSTILE_SECRET_KEY && turnstileToken) {
+      const turnstileRes = await verifyCloudflareTurnstile(turnstileToken);
+      if (!turnstileRes.valid) {
+        return { error: turnstileRes.error || 'Bot verification failed. Please try again.' };
+      }
+    } else {
+      const captchaRes = verifyCaptchaAnswer(captchaToken, captchaAnswer, 0);
+      if (!captchaRes.valid) {
+        return { error: captchaRes.error || 'Verification code failed. Please solve the captcha.' };
+      }
+    }
+
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirmPassword') as string;

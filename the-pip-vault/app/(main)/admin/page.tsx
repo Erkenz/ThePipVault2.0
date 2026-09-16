@@ -109,9 +109,13 @@ export default async function AdminPage() {
   }
 
   // Build users list for admin
-  const userList: AdminUserItem[] = profiles.map((p) => {
+  const processedUserIds = new Set<string>();
+  const userList: AdminUserItem[] = [];
+
+  for (const p of profiles) {
+    processedUserIds.add(p.id);
     const authInfo = authMap.get(p.id);
-    return {
+    userList.push({
       id: p.id,
       email: authInfo?.email || p.email || 'No email found',
       first_name: p.first_name || '',
@@ -124,8 +128,28 @@ export default async function AdminPage() {
       created_at: authInfo?.created_at,
       last_sign_in_at: authInfo?.last_sign_in_at,
       trades_count: userTradesCount.get(p.id) || 0,
-    };
-  });
+    });
+  }
+
+  // Also include any auth users that don't have a profile yet (orphaned auth bots)
+  for (const u of authUsers) {
+    if (!processedUserIds.has(u.id)) {
+      userList.push({
+        id: u.id,
+        email: u.email || 'No email found',
+        first_name: '',
+        last_name: '',
+        role: 'user',
+        group_id: null,
+        group_name: null,
+        starting_equity: 0,
+        currency: 'USD',
+        created_at: u.created_at,
+        last_sign_in_at: u.last_sign_in_at,
+        trades_count: 0,
+      });
+    }
+  }
 
   // Count members per group
   const groupMemberCount = new Map<string, number>();

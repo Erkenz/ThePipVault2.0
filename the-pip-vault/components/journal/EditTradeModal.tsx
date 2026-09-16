@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { X, TrendingUp, TrendingDown, Activity, Crosshair, Wallet, Loader2, Edit3, Calendar } from "lucide-react";
 import { updateTradeAction } from "@/app/(main)/journal/actions";
 import { Trade } from "@/types/database";
@@ -22,6 +23,7 @@ export function EditTradeModal({
   };
   accounts?: any[];
 }) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,6 +108,7 @@ export function EditTradeModal({
       setError(result.error);
       setIsLoading(false);
     } else {
+      router.refresh();
       onClose();
     }
   };

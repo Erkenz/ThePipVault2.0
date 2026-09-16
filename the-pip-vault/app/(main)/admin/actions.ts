@@ -183,3 +183,36 @@ export async function deleteUserAccountAdminAction(targetUserId: string) {
   return { success: true };
 }
 
+export async function bulkDeleteUsersAdminAction(targetUserIds: string[]) {
+  const auth = await verifyAdminUser();
+  if (!auth.authorized) {
+    return { error: auth.error };
+  }
+
+  // Ensure admin cannot delete their own account
+  const validIds = targetUserIds.filter(id => id !== auth.user.id);
+  if (validIds.length === 0) {
+    return { error: 'No valid user accounts to delete.' };
+  }
+
+  let deletedCount = 0;
+  const errors: string[] = [];
+
+  for (const id of validIds) {
+    const result = await deleteUserCascade(id);
+    if (result.success) {
+      deletedCount++;
+    } else if (result.error) {
+      errors.push(result.error);
+    }
+  }
+
+  revalidatePath('/admin');
+  return { 
+    success: true, 
+    deletedCount, 
+    failedCount: errors.length,
+    errors: errors.slice(0, 3) 
+  };
+}
+

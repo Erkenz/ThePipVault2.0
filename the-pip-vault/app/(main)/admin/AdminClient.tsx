@@ -28,7 +28,8 @@ import {
   Shield,
   KeyRound,
   Calendar,
-  Wallet
+  Wallet,
+  CheckSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -39,6 +40,7 @@ import {
   deleteGroupAdminAction,
   deleteInappropriateContentAction,
   deleteUserAccountAdminAction,
+  bulkDeleteUsersAdminAction,
 } from './actions';
 
 interface AdminClientProps {
@@ -91,6 +93,11 @@ export default function AdminClient({
 
   const [selectedUserForDelete, setSelectedUserForDelete] = useState<AdminUserItem | null>(null);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
+
+  // Bulk Selection States
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -215,13 +222,70 @@ export default function AdminClient({
   // -------------------------------------------------------------
   // FILTERED DATA
   // -------------------------------------------------------------
+  const potentialBots = initialUsers.filter(
+    (u) => !u.first_name && !u.last_name && (u.trades_count || 0) === 0 && u.id !== currentUser.id
+  );
+
   const filteredUsers = initialUsers.filter((u) => {
     const matchesSearch =
       u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
       `${u.first_name} ${u.last_name}`.toLowerCase().includes(userSearch.toLowerCase());
-    const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+    const matchesRole =
+      roleFilter === 'all'
+        ? true
+        : roleFilter === 'bots'
+        ? !u.first_name && !u.last_name && (u.trades_count || 0) === 0
+        : u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  const selectableFilteredUsers = filteredUsers.filter((u) => u.id !== currentUser.id);
+  const isAllFilteredSelected =
+    selectableFilteredUsers.length > 0 &&
+    selectableFilteredUsers.every((u) => selectedUserIds.includes(u.id));
+
+  const handleToggleUser = (id: string) => {
+    if (id === currentUser.id) return;
+    setSelectedUserIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (isAllFilteredSelected) {
+      const filteredIdsSet = new Set(selectableFilteredUsers.map((u) => u.id));
+      setSelectedUserIds((prev) => prev.filter((id) => !filteredIdsSet.has(id)));
+    } else {
+      const newSet = new Set([...selectedUserIds, ...selectableFilteredUsers.map((u) => u.id)]);
+      setSelectedUserIds(Array.from(newSet));
+    }
+  };
+
+  const handleSelectAllBots = () => {
+    const botIds = potentialBots.map((b) => b.id);
+    setSelectedUserIds(botIds);
+    toast.info(`Selected ${botIds.length} potential bot accounts. You can review and deselect legitimate users.`);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedUserIds.length === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      const res = await bulkDeleteUsersAdminAction(selectedUserIds);
+      if (res.error) {
+        toast.error(res.error);
+      } else {
+        toast.success(`Successfully deleted ${res.deletedCount ?? selectedUserIds.length} user accounts.`);
+        setSelectedUserIds([]);
+        setShowBulkDeleteModal(false);
+        router.refresh();
+      }
+    } catch {
+      toast.error('An error occurred while deleting selected accounts.');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
 
   const filteredGroups = initialGroups.filter((g) => {
     return (
@@ -601,25 +665,120 @@ export default function AdminClient({
               />
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">
                 Filter:
               </span>
-              {['all', 'admin', 'mentor', 'student', 'user'].map((r) => (
+              {['all', 'admin', 'mentor', 'student', 'user', 'bots'].map((r) => {
+                const isActive = roleFilter === r;
+                const isBots = r === 'bots';
+                const label = 
+                  r === 'all' ? 'All Roles' : 
+                  isBots ? `Bots (${potentialBots.length})` : 
+                  r;
+
+                return (
+                  <button
+                    key={r}
+                    onClick={() => setRoleFilter(r)}
+                    className={`px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
+                      isActive
+                        ? isBots
+                          ? 'bg-red-600 text-white shadow-sm'
+                          : 'bg-slate-900 text-white shadow-sm'
+                        : isBots
+                        ? 'bg-red-50 hover:bg-red-100 border border-red-200 text-red-700'
+                        : 'bg-white hover:bg-slate-50 border border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+
+              {potentialBots.length > 0 && (
                 <button
-                  key={r}
-                  onClick={() => setRoleFilter(r)}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
-                    roleFilter === r
-                      ? 'bg-slate-900 text-white shadow-sm'
-                      : 'bg-white hover:bg-slate-50 border border-slate-200 text-slate-600'
-                  }`}
+                  type="button"
+                  onClick={() => setShowBulkDeleteModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-red-600 hover:bg-red-700 text-white shadow-sm cursor-pointer shrink-0 transition-colors ml-auto sm:ml-2"
+                  title="Purge all unnamed bot accounts"
                 >
-                  {r === 'all' ? 'All Roles' : r}
+                  <Trash2 size={13} />
+                  <span>Purge {potentialBots.length} Bots</span>
                 </button>
-              ))}
+              )}
             </div>
           </div>
+
+          {/* Quick Selection Presets & Actions */}
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-50/80 p-2.5 rounded-md border border-slate-200">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">Quick Select:</span>
+              <button
+                type="button"
+                onClick={handleSelectAllBots}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-semibold cursor-pointer transition-colors"
+                title="Select all unnamed accounts with 0 trades"
+              >
+                <CheckSquare size={13} />
+                <span>Select Inactive Bots ({potentialBots.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleSelectAll}
+                className="px-2.5 py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-medium cursor-pointer transition-colors"
+              >
+                {isAllFilteredSelected ? 'Deselect All Shown' : `Select All Shown (${selectableFilteredUsers.length})`}
+              </button>
+            </div>
+
+            {selectedUserIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedUserIds([])}
+                className="text-slate-500 hover:text-slate-800 text-xs underline cursor-pointer"
+              >
+                Clear Selection
+              </button>
+            )}
+          </div>
+
+          {/* Active Bulk Actions Banner */}
+          {selectedUserIds.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-slate-900 text-white rounded-md shadow-md animate-in fade-in duration-150">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white text-xs font-bold shrink-0">
+                  {selectedUserIds.length}
+                </span>
+                <div>
+                  <div className="text-xs font-bold">
+                    {selectedUserIds.length} User Account{selectedUserIds.length !== 1 ? 's' : ''} Selected
+                  </div>
+                  <div className="text-[11px] text-slate-400">
+                    Review and deselect any legitimate users using the row checkboxes before deleting.
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectedUserIds([])}
+                  className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDeleteModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-red-600 hover:bg-red-700 text-xs font-bold uppercase tracking-wider text-white shadow-sm cursor-pointer transition-colors"
+                >
+                  <Trash2 size={13} />
+                  <span>Delete Selected ({selectedUserIds.length})</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* User Data Table */}
           <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
@@ -627,6 +786,15 @@ export default function AdminClient({
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase tracking-wider text-[10px] font-bold">
                   <tr>
+                    <th className="w-10 px-4 py-3.5 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isAllFilteredSelected}
+                        onChange={handleToggleSelectAll}
+                        className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
+                        title="Select / Deselect all shown"
+                      />
+                    </th>
                     <th className="px-5 py-3.5">User</th>
                     <th className="px-5 py-3.5">Role</th>
                     <th className="px-5 py-3.5">Group Assignment</th>
@@ -638,10 +806,21 @@ export default function AdminClient({
                 <tbody className="divide-y divide-slate-100">
                   {filteredUsers.map((user) => {
                     const isSelf = user.id === currentUser.id;
+                    const isSelected = selectedUserIds.includes(user.id);
                     const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed User';
 
                     return (
-                      <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr key={user.id} className={`transition-colors ${isSelected ? 'bg-red-50/40 hover:bg-red-50/60' : 'hover:bg-slate-50/80'}`}>
+                        <td className="w-10 px-4 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleUser(user.id)}
+                            disabled={isSelf}
+                            className="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-600 cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                            title={isSelf ? 'Cannot select own account' : `Select ${user.email}`}
+                          />
+                        </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
                             <div className="h-9 w-9 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700 shrink-0 shadow-xs">
@@ -722,7 +901,7 @@ export default function AdminClient({
 
                   {filteredUsers.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="text-center py-16 text-slate-400 font-medium">
+                      <td colSpan={7} className="text-center py-16 text-slate-400 font-medium">
                         No users match the search criteria.
                       </td>
                     </tr>
@@ -1190,6 +1369,73 @@ export default function AdminClient({
               >
                 {isDeletingUser ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 <span>Delete Account</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Selected Accounts Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white border border-slate-200 rounded-lg p-6 max-w-md w-full shadow-xl space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-base font-bold text-red-600 flex items-center gap-2">
+                <UserX size={18} />
+                <span>Delete Selected Accounts</span>
+              </h3>
+              <button
+                onClick={() => setShowBulkDeleteModal(false)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-700">
+              <p>
+                You are about to permanently delete <span className="font-bold text-red-600">{selectedUserIds.length}</span> selected account{selectedUserIds.length !== 1 ? 's' : ''} from the database.
+              </p>
+
+              {/* Scrollable list of selected users */}
+              <div className="max-h-44 overflow-y-auto rounded-md border border-slate-200 bg-slate-50 p-2 space-y-1">
+                {selectedUserIds.map((id) => {
+                  const u = initialUsers.find((user) => user.id === id);
+                  return (
+                    <div key={id} className="flex items-center justify-between text-[11px] py-1 px-2 rounded bg-white border border-slate-200 font-mono">
+                      <span className="truncate max-w-[240px] font-bold text-slate-800">{u?.email || id}</span>
+                      <span className="text-[10px] text-slate-500">
+                        {u?.first_name ? `${u.first_name} ${u.last_name}` : 'Unnamed'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-800 space-y-1 text-[11px]">
+                <div className="font-bold">Permanent Deletion Warning:</div>
+                <div>• All trades, balances, and profile auth files will be destroyed.</div>
+                <div>• This action is irreversible.</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteModal(false)}
+                disabled={isBulkDeleting}
+                className="px-4 py-2 rounded-md bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium cursor-pointer shadow-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                {isBulkDeleting ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                <span>Confirm Delete ({selectedUserIds.length})</span>
               </button>
             </div>
           </div>
